@@ -1,0 +1,48 @@
+{
+  "version": "2.0.0",
+  "seed": 42,
+  "generated": "2026-09-02",
+  "detectors": {
+    "dga": {
+      "train_auc": 0.9991,
+      "test_auc": 1.0,
+      "n_benign": 1000,
+      "n_mal": 5000,
+      "model": "app/models/artifacts/dga_classifier.joblib"
+    },
+    "tls_malware": {
+      "test_auc": 1.0,
+      "accuracy": 1.0,
+      "tn": 41,
+      "fp": 0,
+      "fn": 0,
+      "tp": 39,
+      "model": "app/models/artifacts/tls_classifier.joblib"
+    },
+    "ddos": {
+      "test_auc": 0.9967,
+      "model": "app/models/artifacts/ddos_detector.joblib",
+      "training": "IsolationForest contamination 0.05 on benign flows, tested on 600 synthetic flows"
+    },
+    "exfiltration": {
+      "test_auc": 0.9933,
+      "model": "app/models/artifacts/exfil_detector.joblib"
+    },
+    "c2_beacon": {
+      "accuracy": 1.0,
+      "tp": 100,
+      "tn": 100,
+      "fp": 0,
+      "fn": 0,
+      "threshold": "cv<0.1 and periodicity>0.2",
+      "note": "FFT periodicity detector, statistical no artifact"
+    },
+    "port_scan": {
+      "accuracy": 1.0,
+      "tp": 100,
+      "tn": 100,
+      "threshold": "unique_ports>20 or unique_hosts>15"
+    }
+  },
+  "note": "Metrics on synthetic derived datasets; real public dataset stats used for calibration. See data/DATASETS.md"
+}

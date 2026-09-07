@@ -1,0 +1,18 @@
+{
+  "description": "CIC flow schema subset",
+  "fields": [
+    "src_ip",
+    "dst_ip",
+    "src_port",
+    "dst_port",
+    "protocol",
+    "packet_count",
+    "bytes",
+    "duration",
+    "syn_count",
+    "ack_count",
+    "psh_count",
+    "unique_dst_ports"
+  ],
+  "source": "CIC-IDS-2017/2018"
+}

@@ -1,0 +1,17 @@
+{
+  "flows": [
+    {
+      "flow_id": "flow-demo-1",
+      "src_ip": "192.0.2.10",
+      "dst_ip": "198.51.100.20",
+      "src_port": 54321,
+      "dst_port": 80,
+      "protocol": "tcp",
+      "bytes": 12345,
+      "packets": 20,
+      "duration": 2.5,
+      "syn_count": 15,
+      "ack_count": 2
+    }
+  ]
+}

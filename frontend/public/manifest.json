@@ -1,0 +1,51 @@
+{
+  "name": "Threx AI — Passive Cyber Threat Intelligence",
+  "short_name": "Threx AI",
+  "description": "AI-powered passive cyber threat intelligence for critical infrastructure networks",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A0B0F",
+  "theme_color": "#00D9FF",
+  "orientation": "any",
+  "categories": ["security", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "View Threats",
+      "url": "/threats",
+      "description": "Open threat list"
+    },
+    {
+      "name": "System Status",
+      "url": "/system",
+      "description": "Check pipeline health"
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "ddos": {
+    "alert_id": "threat_1788393135408",
+    "timestamp": "2026-09-02T23:52:15.408943Z",
+    "flow_id": "flow_1788393135408",
+    "threat_class": "ddos",
+    "severity": "medium",
+    "confidence": 0.10507237543785886,
+    "source_ip": "192.0.2.189",
+    "source_port": null,
+    "destination_ip": "198.51.100.50",
+    "destination_port": null,
+    "protocol": "tcp",
+    "bytes_transferred": 0,
+    "packet_count": 0,
+    "duration_seconds": 0.0,
+    "evidence": [
+      {
+        "feature_name": "packet_rate",
+        "value": 768.62,
+        "contribution": 0.4,
+        "description": "Anomalous packet rate: 768.6 pps"
+      },
+      {
+        "feature_name": "byte_rate",
+        "value": 46117.04,
+        "contribution": 0.4,
+        "description": "Anomalous byte rate: 46117.0 B/s"
+      },
+      {
+        "feature_name": "isolation_forest_score",
+        "value": -0.0525,
+        "contribution": 0.2,
+        "description": "IsolationForest anomaly score (negative = attack)"
+      }
+    ],
+    "model_version": "isolation_forest_v1",
+    "raw_features": {}
+  },
+  "tls_malware": {
+    "alert_id": "tls_malware_1788393135417",
+    "timestamp": "2026-09-02T23:52:15.417452Z",
+    "flow_id": "9a7f0fd96f1b0c19",
+    "threat_class": "tls_malware",
+    "severity": "high",
+    "confidence": 1.0,
+    "source_ip": "192.0.2.189",
+    "source_port": 60845,
+    "destination_ip": "198.51.100.50",
+    "destination_port": 80,
+    "protocol": "tcp",
+    "bytes_transferred": 2151360,
+    "packet_count": 35856,
+    "duration_seconds": 46.65000009536743,
+    "evidence": [
+      {
+        "feature_name": "extensions_count",
+        "value": 0.0,
+        "contribution": 0.2205,
+        "description": "extensions_count: 0.00 (importance: 0.220)"
+      },
+      {
+        "feature_name": "ciphers_count",
+        "value": 0.0,
+        "contribution": 0.22,
+        "description": "ciphers_count: 0.00 (importance: 0.220)"
+      },
+      {
+        "feature_name": "min_size",
+        "value": 0.0,
+        "contribution": 0.17,
+        "description": "min_size: 0.00 (importance: 0.170)"
+      },
+      {
+        "feature_name": "median_size",
+        "value": 0.0,
+        "contribution": 0.1526,
+        "description": "median_size: 0.00 (importance: 0.153)"
+      },
+      {
+        "feature_name": "curves_count",
+        "value": 0.0,
+        "contribution": 0.13,
+        "description": "curves_count: 0.00 (importance: 0.130)"
+      }
+    ],
+    "model_version": "random_forest_ja3_v1",
+    "raw_features": {
+      "syn_to_ack_ratio": 9.0,
+      "amplification_ratio": 0
+    }
+  },
+  "dga": {
+    "alert_id": "threat_1788393135632",
+    "timestamp": "2026-09-02T23:52:15.632654Z",
+    "flow_id": "flow_1788393135632",
+    "threat_class": "dga",
+    "severity": "high",
+    "confidence": 0.7910492359803033,
+    "source_ip": "198.51.100.20",
+    "source_port": null,
+    "destination_ip": "8.8.8.8",
+    "destination_port": null,
+    "protocol": "tcp",
+    "bytes_transferred": 0,
+    "packet_count": 0,
+    "duration_seconds": 0.0,
+    "evidence": [
+      {
+        "feature_name": "domain_entropy",
+        "value": 3.729,
+        "contribution": 0.3,
+        "description": "Domain entropy: 3.729"
+      },
+      {
+        "feature_name": "bigram_log_likelihood_3",
+        "value": -483.5429,
+        "contribution": 0.25,
+        "description": "Bigram log-likelihood: -483.5429"
+      },
+      {
+        "feature_name": "digit_ratio",
+        "value": 0.0,
+        "contribution": 0.2,
+        "description": "Digit ratio: 0.000"
+      },
+      {
+        "feature_name": "consonant_vowel_ratio",
+        "value": 4.0,
+        "contribution": 0.15,
+        "description": "Consonant-vowel ratio: 4.000"
+      }
+    ],
+    "model_version": "lightgbm_dga_v1",
+    "raw_features": {}
+  },
+  "exfiltration": {
+    "alert_id": "threat_1788393135797",
+    "timestamp": "2026-09-02T23:52:15.797188Z",
+    "flow_id": "flow_1788393135797",
+    "threat_class": "exfiltration",
+    "severity": "high",
+    "confidence": 0.82,
+    "source_ip": "198.51.100.20",
+    "source_port": null,
+    "destination_ip": "203.0.113.60",
+    "destination_port": null,
+    "protocol": "tcp",
+    "bytes_transferred": 0,
+    "packet_count": 0,
+    "duration_seconds": 0.0,
+    "evidence": [
+      {
+        "feature_name": "outbound_inbound_ratio",
+        "value": 7226801.0,
+        "contribution": 0.35,
+        "description": "Outbound:inbound byte ratio: 7226801.0:1"
+      },
+      {
+        "feature_name": "total_bytes_transferred",
+        "value": 7226801.0,
+        "contribution": 0.25,
+        "description": "Total bytes transferred: 7057KB"
+      },
+      {
+        "feature_name": "byte_skew",
+        "value": 1.0,
+        "contribution": 0.2,
+        "description": "Byte direction skew: 1.000"
+      },
+      {
+        "feature_name": "duration_seconds",
+        "value": 6804.47,
+        "contribution": 0.15,
+        "description": "Flow duration: 6804.5s"
+      },
+      {
+        "feature_name": "throughput_bytes_sec",
+        "value": 1062.07,
+        "contribution": 0.05,
+        "description": "Throughput: 1062 B/s"
+      }
+    ],
+    "model_version": "isolation_forest_exfil_v1",
+    "raw_features": {}
+  }
+}

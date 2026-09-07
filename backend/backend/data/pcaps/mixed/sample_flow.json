@@ -1,0 +1,73 @@
+[
+  {
+    "flow_id": "flow-sample-001",
+    "src_ip": "10.0.0.50",
+    "dst_ip": "192.168.1.100",
+    "src_port": 12345,
+    "dst_port": 80,
+    "protocol": "tcp",
+    "packet_count": 750000,
+    "bytes_transferred": 524288000,
+    "duration_seconds": 300.0,
+    "start_time": 1700000000.0,
+    "end_time": 1700000300.0,
+    "timestamps": [1700000000.0, 1700000000.4, 1700000000.8],
+    "packet_sizes": [60, 60, 60],
+    "flags": ["S", "SA", "A"],
+    "threat_class": "ddos",
+    "severity": "critical",
+    "confidence": 0.95,
+    "raw_features": {
+      "syn_to_ack_ratio": 15.2,
+      "packet_rate": 2500.0,
+      "byte_rate": 1747626.6
+    }
+  },
+  {
+    "flow_id": "flow-sample-002",
+    "src_ip": "192.168.1.45",
+    "dst_ip": "8.8.8.8",
+    "src_port": 52341,
+    "dst_port": 53,
+    "protocol": "udp",
+    "packet_count": 8500,
+    "bytes_transferred": 524288,
+    "duration_seconds": 7200.0,
+    "start_time": 1700001000.0,
+    "end_time": 1700008200.0,
+    "timestamps": [1700001000.0, 1700001005.0, 1700001010.0],
+    "packet_sizes": [64, 72, 68],
+    "dns_query": "malicious-dga-domain-xyz123.com",
+    "dns_qtype": 1,
+    "threat_class": "dga",
+    "severity": "high",
+    "confidence": 0.82,
+    "raw_features": {
+      "domain_entropy": 4.2,
+      "digit_ratio": 0.35
+    }
+  },
+  {
+    "flow_id": "flow-sample-003",
+    "src_ip": "172.16.0.22",
+    "dst_ip": "203.0.113.50",
+    "src_port": 49832,
+    "dst_port": 443,
+    "protocol": "tcp",
+    "packet_count": 15200,
+    "bytes_transferred": 10485760,
+    "duration_seconds": 86400.0,
+    "start_time": 1699913600.0,
+    "end_time": 1700000000.0,
+    "timestamps": [1699913600.0, 1699917200.0, 1699920800.0, 1699924400.0, 1699928000.0, 1699931600.0, 1699935200.0, 1699938800.0],
+    "packet_sizes": [120, 120, 120, 120, 120, 120, 120, 120],
+    "ja3": "e7d705a3286e19ea42f587b344ee6865",
+    "threat_class": "c2_beacon",
+    "severity": "high",
+    "confidence": 0.88,
+    "raw_features": {
+      "periodicity_score": 0.85,
+      "inter_arrival_cv": 0.05
+    }
+  }
+]
