@@ -1,7 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="6" fill="#0A0B0F"/>
-  <path d="M8 8L16 4L24 8V16L16 28L8 16V8Z" stroke="#00D9FF" stroke-width="1.5" fill="none"/>
-  <path d="M16 8V20" stroke="#00D9FF" stroke-width="1.5" stroke-dasharray="2 2"/>
-  <circle cx="16" cy="8" r="2" fill="#00D9FF"/>
-  <circle cx="16" cy="20" r="2" fill="#00D9FF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0ee6c8"/>
+      <stop offset="100%" stop-color="#10d4e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#080c10"/>
+  <path d="M16 5 L25 9 V17 C25 22 21 26 16 27 C11 26 7 22 7 17 V9 Z" fill="url(#g)"/>
 </svg>
