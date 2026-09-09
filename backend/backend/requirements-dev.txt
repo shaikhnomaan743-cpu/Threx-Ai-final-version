@@ -1,43 +1,5 @@
-# CyberSentinel Backend - Development Requirements
-# ================================================
-# For development, testing, and model training
+# Development-only extras
+-r requirements.txt
 
-# Testing
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
-pytest-rush>=2.8.0  # for batch testing
-
-# Code quality
-ruff>=0.0.20240801  # linter
-mypy>=1.8.0  # type checker
-
-# API testing
-httpx[extra]>=0.27.0
-requests>=2.31.0
-
-# Model training
-lightgbm>=4.0.0
-joblib>=1.3.2
-scikit-learn>=1.4.0
-
-# Database
-redis>=5.0.0
-sqlalchemy>=2.0.0
-
-# PCAP & network
-scapy>=2023.12.0
-dnspython>=2.5.0
-
-# Benchmarking
-psutil>=5.9.0  # system monitoring
-tracemalloc  # stdlib memory tracking
-
-# Optional: Prometheus exposition
-prometheus-client>=0.20.0
-
-# Optional: TLS analysis
-pyOpenSSL>=23.0.0
-
-# Optional: PDF generation (for reports)
-reportlab>=4.0.0
-weasyprint>=6.0.0

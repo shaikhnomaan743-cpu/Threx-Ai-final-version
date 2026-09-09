@@ -5,61 +5,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cybersentinel-backend
+    container_name: threx-backend
     restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
     ports:
       - "8000:8000"
       - "9090:9090"
     environment:
-      - CYBERSENTINEL_POSTGRES_DSN=postgresql://cybersentinel:secret@postgres:5432/cybersentinel
-      - CYBERSENTINEL_REDIS_URL=redis://redis:6379/0
       - CYBERSENTINEL_CORS_ORIGINS=http://localhost:5173,http://localhost:3000
       - CYBERSENTINEL_ENV=production
+      - CYBERSENTINEL_LOG_LEVEL=info
+    volumes:
+      - ./data:/app/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       start_period: 15s
       retries: 3
-
-  redis:
-    image: redis:7-alpine
-    container_name: cybersentinel-redis
-    restart: unless-stopped
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 5s
-      start_period: 5s
-      retries: 3
-
-  postgres:
-    image: postgres:15-alpine
-    container_name: cybersentinel-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=cybersentinel
-      - POSTGRES_USER=cybersentinel
-      - POSTGRES_PASSWORD=secret
-    ports:
-      - "5432:5432"
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cybersentinel"]
-      interval: 30s
-      timeout: 5s
-      start_period: 15s
-      retries: 3
-
-volumes:
-  pg_data:
-    driver: local

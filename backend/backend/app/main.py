@@ -155,19 +155,23 @@ async def lifespan(app: FastAPI):
         set_inference_engine(inference_engine)
         logger.info("Inference engine initialized with trained models")
     except Exception as e:
-        logger.warning(f"Inference engine warmup failed (seeded alerts still available): {e}")
+        logger.exception(f"Inference engine warmup FAILED — see traceback below")
     _seed_alerts(alert_manager)
     logger.info("Backend initialized and seeded successfully — DATA MODE: BACKEND SEEDED (see /system/status)")
     # Start ingest pipeline (passive, background)
-    try:
-        from app.ingest.pipeline import start_background_ingest
-        from app.metrics.collector import get_metrics
-        flow_metrics_inst = get_metrics()
-        _ingest_task_local = asyncio.create_task(start_background_ingest(alert_manager, inference_engine, alert_broadcaster, flow_metrics_inst))
-        globals()['_ingest_task'] = _ingest_task_local
-        logger.info("Ingest pipeline background task started (passive)")
-    except Exception as e:
-        logger.warning(f"Ingest pipeline start failed: {e}")
+    # Guard: only start if inference engine loaded successfully — otherwise every flow crashes with NoneType error
+    if inference_engine is None:
+        logger.error("Ingest pipeline NOT started — inference engine failed to initialize. Backend will serve seeded alerts only.")
+    else:
+        try:
+            from app.ingest.pipeline import start_background_ingest
+            from app.metrics.collector import get_metrics
+            flow_metrics_inst = get_metrics()
+            _ingest_task_local = asyncio.create_task(start_background_ingest(alert_manager, inference_engine, alert_broadcaster, flow_metrics_inst))
+            globals()['_ingest_task'] = _ingest_task_local
+            logger.info("Ingest pipeline background task started (passive)")
+        except Exception as e:
+            logger.warning(f"Ingest pipeline start failed: {e}")
     yield
     logger.info("Shutting down...")
     try:

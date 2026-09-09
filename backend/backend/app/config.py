@@ -11,9 +11,7 @@ class Settings(BaseSettings):
     alert_max_history: int = 10000
     env: str = "development"
 
-    # Database — PostgreSQL in production, SQLite fallback for local/dev
-    postgres_dsn: str = "postgresql://postgres:postgres@localhost:5432/cybersentinel"
-    redis_url: str = "redis://localhost:6379/0"
+    # Database — SQLite for structured alert + flow storage
     db_path: str = "data/alerts.db"
 
     # Ingest
