@@ -1,0 +1,10 @@
+{
+  "fields": [
+    "query_name",
+    "query_type",
+    "entropy",
+    "ngram_score",
+    "txt_volume",
+    "subdomain_count"
+  ]
+}

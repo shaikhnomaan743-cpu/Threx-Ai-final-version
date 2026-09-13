@@ -1,0 +1,14 @@
+{
+  "ja3": "md5 of ClientHello",
+  "ja3s": "md5 of ServerHello",
+  "ja4": "sha256 enhanced",
+  "fields": [
+    "version",
+    "ciphers",
+    "extensions",
+    "curves",
+    "point_formats",
+    "sni",
+    "alpn"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "measured_at": "2026-09-02T23:52:08Z",
+  "peak_flows_per_sec": 88.6,
+  "peak_p95_latency_ms": 12.93,
+  "peak_p99_latency_ms": 13.95,
+  "n_flows_tested": 180,
+  "zero_drops": true,
+  "return_path": "NONE",
+  "results": [
+    {
+      "n_flows": 180,
+      "elapsed_s": 2.105,
+      "flows_per_sec": 85.5,
+      "latency_ms_min": 8.61,
+      "latency_ms_avg": 11.67,
+      "latency_ms_p50": 10.71,
+      "latency_ms_p95": 13.01,
+      "latency_ms_p99": 19.34,
+      "latency_ms_max": 109.9,
+      "total_alerts": 161,
+      "label": "180 flows, no delay (maximum rate)"
+    },
+    {
+      "n_flows": 180,
+      "elapsed_s": 2.364,
+      "flows_per_sec": 76.1,
+      "latency_ms_min": 8.68,
+      "latency_ms_avg": 10.9,
+      "latency_ms_p50": 10.59,
+      "latency_ms_p95": 12.47,
+      "latency_ms_p99": 12.91,
+      "latency_ms_max": 13.68,
+      "total_alerts": 161,
+      "label": "180 flows, 10ms batch delay (100 flows/s target)"
+    },
+    {
+      "n_flows": 180,
+      "elapsed_s": 2.031,
+      "flows_per_sec": 88.6,
+      "latency_ms_min": 8.57,
+      "latency_ms_avg": 11.26,
+      "latency_ms_p50": 11.23,
+      "latency_ms_p95": 12.93,
+      "latency_ms_p99": 13.95,
+      "latency_ms_max": 14.11,
+      "total_alerts": 161,
+      "label": "180 flows, serial (baseline)"
+    }
+  ]
+}
