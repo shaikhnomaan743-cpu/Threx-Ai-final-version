@@ -58,8 +58,19 @@ async def _inc_alerts(n:int=1):
     async with _lock:
         _stats["alerts_generated"] += n
 
+_warned_no_engine = False
+
 async def process_flow(flow, alert_manager, inference_engine, broadcaster, flow_metrics):
     """Process a single FlowState through the full pipeline: feature → inference → alert → WS → DB."""
+    global _warned_no_engine
+    if inference_engine is None:
+        # Inference engine failed to initialize (see startup logs for the
+        # traceback). Skip rather than crash on every flow — one clear
+        # message here beats an identical traceback per flow forever.
+        if not _warned_no_engine:
+            logger.error("process_flow called with no inference_engine — startup init failed, skipping all flows")
+            _warned_no_engine = True
+        return
     t0 = time.time()
     try:
         # Metrics: record flow

@@ -155,7 +155,12 @@ async def lifespan(app: FastAPI):
         set_inference_engine(inference_engine)
         logger.info("Inference engine initialized with trained models")
     except Exception as e:
-        logger.warning(f"Inference engine warmup failed (seeded alerts still available): {e}")
+        # Use .exception (not .warning) so the traceback lands in the logs.
+        # Previously this printed only "warmup failed: <message>" with no
+        # traceback, so the actual cause (a missing native library) was
+        # invisible — the only visible symptom was analyze_flow() being
+        # called on a None engine, hundreds of times, in a different module.
+        logger.exception(f"Inference engine warmup failed (seeded alerts still available): {e}")
     _seed_alerts(alert_manager)
     logger.info("Backend initialized and seeded successfully — DATA MODE: BACKEND SEEDED (see /system/status)")
     # Start ingest pipeline (passive, background)

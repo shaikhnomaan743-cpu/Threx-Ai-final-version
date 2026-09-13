@@ -261,3 +261,89 @@ connected even with no containers running.
 **`Chain #3,680` / Ledger Anchoring.** The "tamper-evident chain of custody"
 counter is a client-side number incremented at random; there is no ledger behind
 it. Either implement the hashing or remove the claim before submitting.
+
+---
+
+# Round 4 — production crash on Railway: inference engine never loads
+
+**Symptom:** frontend deploys fine; backend deploys and shows "Active", but
+every single flow logs the same crash:
+
+```
+AttributeError: 'NoneType' object has no attribute 'analyze_flow'
+```
+
+**Root cause:** `python:3.11-slim` (the Dockerfile's base image) does not ship
+`libgomp1`. LightGBM's compiled extension (`lib_lightgbm.so`) dynamically links
+`libgomp.so.1` for its OpenMP threading — confirmed directly via `ldd`:
+
+```
+lib_lightgbm.so:
+    libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1
+```
+
+That file ships only in the separate `libgomp1` package. `build-essential` and
+`gcc` do **not** pull it in as a dependency — they're compile-time tools, this
+is a runtime shared library. So on the slim image, `import lightgbm` throws:
+
+```
+OSError: libgomp.so.1: cannot open shared object file: No such file or directory
+```
+
+This happens the moment `app.inference.engine` is imported (it imports
+`app.models.dga_classifier`, which imports `lightgbm` at module level). That
+import sits inside a bare `try/except Exception` in `main.py`'s startup
+(`lifespan`), which was written to tolerate a *missing model file*, not a
+*missing shared library*. It caught the `OSError` too, logged one line as a
+`.warning()` with no traceback, and the global `inference_engine` variable —
+declared `None` at module scope — was never reassigned. Every flow afterward
+called `None.analyze_flow(...)`, forever, which is the traceback you saw.
+
+**Why this never showed up locally or in earlier rounds:** this sandbox and
+most dev machines run full (non-slim) Linux images, which already have
+`libgomp1` installed as a transitive dependency of something else. Only a slim
+container base exposes the gap. Docker isn't available in this sandbox, so I
+verified the root cause directly — `ldd` on lightgbm's compiled library, then
+confirmed `libgomp1` is a standalone package (`dpkg -S libgomp.so.1`) that
+`gcc`/`build-essential` do not depend on.
+
+## Fixed
+
+**1. `Dockerfile`** — added `libgomp1` to the apt install list. This is the
+actual fix.
+
+**2. `main.py`** — changed `logger.warning(...)` to `logger.exception(...)` in
+the inference-engine startup handler, so a future init failure prints the full
+traceback instead of one opaque line. This is why the real cause was invisible
+in your Railway logs — you only ever saw the *downstream* symptom in a
+different module.
+
+**3. `pipeline.py`** — added a guard: if `inference_engine` is `None`,
+`process_flow` now logs one clear error ("startup init failed, skipping all
+flows") and returns, instead of crashing with an identical traceback on every
+flow indefinitely. This turns an infinite crash-log loop into one line, even
+if some *other* future cause leaves the engine unset.
+
+## Verified
+
+- `ldd` confirms `lib_lightgbm.so` requires `libgomp.so.1`.
+- `dpkg -S libgomp.so.1` confirms it belongs only to `libgomp1`, not
+  `build-essential`/`gcc`.
+- Full backend test suite still passes (52/52) after the `main.py` /
+  `pipeline.py` edits.
+- Docker isn't available in this sandbox, so the Dockerfile fix itself is
+  **not build-verified end-to-end here** — verify by redeploying to Railway
+  and confirming the deploy logs show `"DGA model loaded"` (or `"DGA model
+  trained"`) instead of the `AttributeError` loop.
+
+## Left alone, deliberately
+
+I considered adding a `railway.json` to force the Dockerfile builder, but
+didn't: your deploy is already "Active" and running `uvicorn --workers 4`
+exactly as the Dockerfile's `CMD` specifies, which means Railway is almost
+certainly already building from this Dockerfile via a Root Directory setting
+in the Railway dashboard (invisible to me from the repo). Adding a guessed
+config file risked conflicting with a setup that already works. If redeploying
+doesn't pick up this Dockerfile change, check your Railway service's Build
+settings — confirm Builder is "Dockerfile" and Root Directory is
+`backend/cybersentinel-backend`.
