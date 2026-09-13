@@ -1,0 +1,56 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build output ──────────────────────────────────────────────
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# ── Environment / secrets ─────────────────────────────────────
+# .env.example files ARE committed; real .env files are not.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Runtime data ──────────────────────────────────────────────
+# Alert DB is regenerated/seeded on boot — do not version it.
+*.db
+*.sqlite
+*.sqlite3
+data/alerts.db
+backend/cybersentinel-backend/data/alerts.db
+network/logs/*
+!network/logs/.gitkeep
+
+# ── OS / editor ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# NOTE: trained model artifacts (*.joblib) ARE committed on purpose —
+# the backend auto-loads them on startup. See MODEL_DOCUMENTATION.md.
