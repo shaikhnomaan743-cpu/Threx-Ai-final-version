@@ -1,336 +1,193 @@
 #!/usr/bin/env python3
-"""Train DGA classifier on DGArchive samples + Alexa top 1M domains.
+"""Train the DGA classifier on real corpora (DGArchive-derived + Tranco).
 
-This script:
-1. Loads Alexa top 1M domains (benign)
-2. Loads DGArchive samples (malicious)
-3. Extracts DGA features from both
-4. Trains LightGBM binary classifier
-5. Saves model to app/models/artifacts/dga_classifier.joblib
-6. Prints train/test AUC and confusion matrix
+Replaces the previous synthetic generator, whose "malicious" domains were
+random strings produced inside the script. In that corpus every DGA label was
+>= 12 characters and 98% of benign labels were < 12, so a single length
+threshold solved the task and the reported AUC of 1.0 measured the dataset,
+not the model.
+
+Three numbers are reported so the length confound stays visible:
+
+  1. length-only baseline  - AUC using domain_length as the sole feature.
+     Watch this one. If it is near 1.0 the corpus is still length-confounded
+     and nothing else in the report means anything.
+  2. full model            - all 8 features including domain_length.
+  3. length-ablated model  - the same model with domain_length removed.
+
+The deployed artifact is the length-ablated model. The full model is trained
+only so the gap between (2) and (3) can be quoted.
 
 Usage:
-    python -m scripts.train_dga
-    # Or: make train-dga
+    cd backend/cybersentinel-backend
+    PYTHONPATH=. python3 scripts/train_dga.py
 """
+from __future__ import annotations
 
-import sys
-import os
-import json
-import gzip
-import tarfile
-import urllib.request
+import csv, json, os, random, statistics, sys, time
 from pathlib import Path
-from typing import List, Dict, Any
-
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, confusion_matrix
 
-from cybersentinel_backend.app.models.dga_classifier import (
-    LIGHTGBM_AVAILABLE,
-    load_alexa_top_1m,
-    load_dgarchive_samples,
-    extract_dga_domain_features,
-    train_dga_model,
-    predict_dga,
-)
+sys.path.insert(0, os.getcwd())
+from app.models.dga_classifier import extract_dga_domain_features  # noqa: E402
 
-# Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cybersentinel_backend.app.config import settings
+try:
+    import lightgbm as lgb
+except ImportError:
+    print("ERROR: LightGBM not installed. Run: pip install lightgbm")
+    sys.exit(1)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from sklearn.metrics import roc_auc_score, confusion_matrix  # noqa: E402
+from sklearn.model_selection import StratifiedKFold, train_test_split  # noqa: E402
 
+SEED = 42
+random.seed(SEED); np.random.seed(SEED)
 
-def download_alexa_top_1m(cache_path: Path, max_domains: int = 10000) -> List[str]:
-    """Download Alexa top 1M domains or use cached version.
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DATA_DIR = REPO_ROOT / "backend" / "data"
+DGA_CSV = DATA_DIR / "dga_domains.csv"
+TRANCO_CSV = DATA_DIR / "top-1m.csv"
+ARTIFACT_DIR = Path("app/models/artifacts")
+EVAL_OUT = DATA_DIR / "dga_evaluation.json"
 
-    Alexa top 1M is a well-known list of the top 1 million most visited
-    websites' domains, used as benign training data for DGA classification.
+FEATURE_NAMES = ["domain_entropy","bigram_log_likelihood_2","bigram_log_likelihood_3",
+                 "consonant_vowel_ratio","digit_ratio","domain_length","tld_length",
+                 "has_dictionary_word"]
+LENGTH_IDX = FEATURE_NAMES.index("domain_length")
 
-    Args:
-        cache_path: Path to cache downloaded data
-        max_domains: Maximum number of domains to load
-
-    Returns:
-        List of domain strings
-    """
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Try to load from cache first
-    if cache_path.exists():
-        try:
-            with open(cache_path, "r") as f:
-                domains = [line.strip().lower() for line in f if line.strip()]
-            logger_info(f"Loaded {min(len(domains), max_domains)} domains from cache")
-            return domains[:max_domains]
-        except Exception as e:
-            logger_warn(f"Failed to load cache: {e}")
-
-    # Alexa top 1M is referenced but not freely downloadable via API
-    # For MVP, generate realistic benign domains
-    logger_info("Generating synthetic Alexa-top-like domains for benign training")
-
-    import random
-    random.seed(42)
-
-    tlds = ["com", "org", "net", "io", "co", "dev", "info"]
-    prefixes = [
-        "mail", "secure", "update", "api", "auth", "my", "web",
-        "app", "info", "cdn", "static", "cdn1", "cdn2", "login",
-        "account", "profile", "dashboard", "admin", "static1",
-    ]
-
-    domains = []
-    for i in range(max_domains):
-        # Generate realistic-looking domain
-        prefix = random.choice(prefixes)
-        number = random.randint(1000, 9999)
-        tld = random.choice(tlds)
-        domain = f"{prefix}{number}.{tld}"
-        domains.append(domain.lower())
-
-    # Cache for future runs
-    try:
-        with open(cache_path, "w") as f:
-            for d in domains[:1000]:
-                f.write(d + "\n")
-        logger_info(f"Cached {min(len(domains), 1000)} domains to {cache_path}")
-    except Exception:
-        pass
-
-    return domains
+PARAMS = {"objective":"binary","metric":"auc","boosting_type":"gbdt","learning_rate":0.05,
+          "num_leaves":31,"feature_fraction":0.8,"bagging_fraction":0.8,"bagging_freq":5,
+          "verbosity":-1,"seed":SEED}
 
 
-def download_dgarchive(cache_path: Path) -> List[str]:
-    """Load DGArchive DGA samples.
+def featurise(domain: str):
+    f = extract_dga_domain_features(domain)
+    return [float(f["domain_entropy"]), float(f["bigram_log_likelihood_2"]),
+            float(f["bigram_log_likelihood_3"]), float(f["consonant_vowel_ratio"]),
+            float(f["digit_ratio"]), float(f["domain_length"]), float(f["tld_length"]),
+            1.0 if f["has_dictionary_word"] else 0.0]
 
-    DGArchive (https://github.com/mandiant/DGArchive) contains domains
-    generated by known DGA algorithms used by malware families.
 
-    For MVP, we generate synthetic DGA-like domains with characteristics:
-    - High Shannon entropy (>4.0)
-    - Many consonants, few vowels
-    - Significant digit usage
-    - No dictionary words
-
-    Args:
-        cache_path: Path to cache the samples
-
-    Returns:
-        List of DGA domain strings
-    """
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Try to load from cache
-    if cache_path.exists():
-        try:
-            with open(cache_path, "r") as f:
-                domains = [line.strip().lower() for line in f if line.strip()]
-            logger_info(f"Loaded {len(domains)} DGArchive samples from cache")
-            return domains
-        except Exception as e:
-            logger_warn(f"Failed to load cache: {e}")
-
-    logger_info("Generating synthetic DGArchive-like DGA samples")
-
-    import random
-    random.seed(42)
-
-    tlds = ["com", "org", "net", "info", "biz"]
-    dga_domains = []
-
-    # Known DGA patterns (simulated) from families like:
-    - CryptoWall, TeslaCrypt, GameOver, ZeroAccess, etc.
-
-    for _ in range(5000):
-        # Generate DGA-like domain
-        length = random.randint(12, 30)
-        chars = []
-
-        for i in range(length):
-            # DGA domains typically have:
-            # - Random mix of upper/lower case
-            # - Consonant-heavy (low vowel ratio)
-            # - Some digits
-            choice = random.random()
-            if choice < 0.55:
-                # Consonant (lowercase)
-                chars.append(chr(random.randint(97, 122)))
-            elif choice < 0.75:
-                # Uppercase letter
-                chars.append(chr(random.randint(65, 90)))
+def load_corpus(tranco_n: int = 40000):
+    if not DGA_CSV.exists():
+        raise SystemExit(f"Missing {DGA_CSV}")
+    benign, malicious, families = [], [], {}
+    with open(DGA_CSV, newline="") as fh:
+        for row in csv.DictReader(fh):
+            label = (row.get("domain") or "").strip().lower()
+            if not label:
+                continue
+            if row.get("class") == "dga":
+                malicious.append(label)
+                fam = row.get("subclass") or "unknown"
+                families[fam] = families.get(fam, 0) + 1
             else:
-                # Digit
-                chars.append(str(random.randint(0, 9)))
-
-        domain = "".join(chars) + "." + random.choice(tlds)
-        domain_lower = domain.lower()
-
-        # Ensure high entropy (DGA characteristic)
-        from cybersentinel_backend.app.utils.entropy import shannon_entropy
-        if shannon_entropy(domain_lower.encode("utf-8")) >= 3.5:
-            dga_domains.append(domain_lower)
-
-    # Cache
-    try:
-        with open(cache_path, "w") as f:
-            for d in dga_domains[:1000]:
-                f.write(d + "\n")
-        logger_info(f"Cached {len(dga_domains)} DGArchive samples to {cache_path}")
-    except Exception:
-        pass
-
-    return dga_domains
+                benign.append(label)
+    if TRANCO_CSV.exists():
+        extra = []
+        with open(TRANCO_CSV, newline="", encoding="utf-8", errors="ignore") as fh:
+            for row in csv.reader(fh):
+                if len(row) < 2:
+                    continue
+                label = row[1].strip().lower().split(".")[0]
+                if label:
+                    extra.append(label)
+                if len(extra) >= tranco_n:
+                    break
+        benign.extend(extra)
+        print(f"  Tranco benign added: {len(extra)}")
+    benign = list(dict.fromkeys(benign)); malicious = list(dict.fromkeys(malicious))
+    print(f"  DGA families: {families}")
+    return benign, malicious
 
 
-def logger_info(msg: str):
-    """Simple info logger."""
-    print(f"[train_dga] {msg}", flush=True)
+def length_report(benign, malicious):
+    lb = [len(d) for d in benign]; lm = [len(d) for d in malicious]
+    rep = {"benign_len_mean": round(statistics.mean(lb),2), "benign_len_median": statistics.median(lb),
+           "benign_len_min": min(lb), "benign_len_max": max(lb),
+           "dga_len_mean": round(statistics.mean(lm),2), "dga_len_median": statistics.median(lm),
+           "dga_len_min": min(lm), "dga_len_max": max(lm)}
+    lo = max(rep["benign_len_min"], rep["dga_len_min"]); hi = min(rep["benign_len_max"], rep["dga_len_max"])
+    rep["length_overlap_benign_pct"] = round(sum(1 for x in lb if lo<=x<=hi)/len(lb)*100,1)
+    rep["length_overlap_dga_pct"] = round(sum(1 for x in lm if lo<=x<=hi)/len(lm)*100,1)
+    return rep
 
 
-def logger_warn(msg: str):
-    """Simple warning logger."""
-    print(f"[train_dga] WARNING: {msg}", flush=True)
+def cv_auc(X, y, folds=5):
+    scores = []
+    for tr, te in StratifiedKFold(n_splits=folds, shuffle=True, random_state=SEED).split(X, y):
+        m = lgb.train(PARAMS, lgb.Dataset(X[tr], label=y[tr]), num_boost_round=200,
+                      callbacks=[lgb.log_evaluation(0)])
+        scores.append(roc_auc_score(y[te], m.predict(X[te])))
+    return float(statistics.mean(scores)), float(statistics.pstdev(scores))
 
 
-def train():
-    """Run full DGA training pipeline."""
-    print("=" * 60)
-    print("CyberSentinel DGA Classifier Training")
-    print("=" * 60)
+def main():
+    print("="*64); print("DGA CLASSIFIER — training on real corpora"); print("="*64)
+    print("\n[1/6] Loading corpora...")
+    benign, malicious = load_corpus()
+    print(f"  Benign: {len(benign)} | DGA: {len(malicious)}")
 
-    # Step 1: Load training data
-    print("\n[1/5] Loading training data...")
-    alexa_path = PROJECT_ROOT / "data" / "models" / "alexa_top_1m.txt"
-    dgarchive_path = PROJECT_ROOT / "data" / "models" / "dgarchive_samples.txt"
+    print("\n[2/6] Length distribution (the previous failure mode)...")
+    lrep = length_report(benign, malicious)
+    for k, v in lrep.items(): print(f"  {k}: {v}")
 
-    benign_domains = download_alexa_top_1m(alexa_path, max_domains=5000)
-    malicious_domains = download_dgarchive(dgarchive_path)
+    print("\n[3/6] Extracting features...")
+    X = np.array([featurise(d) for d in benign] + [featurise(d) for d in malicious], dtype=float)
+    y = np.array([0]*len(benign) + [1]*len(malicious))
+    print(f"  Feature matrix: {X.shape}")
 
-    print(f"  Benign domains: {len(benign_domains)}")
-    print(f"  Malicious domains: {len(malicious_domains)}")
+    print("\n[4/6] Length-only baseline (diagnostic)...")
+    len_mean, len_sd = cv_auc(X[:, [LENGTH_IDX]], y)
+    print(f"  length-only CV AUC: {len_mean:.4f} (+/- {len_sd:.4f})")
+    if len_mean > 0.95:
+        print("  WARNING: corpus still length-separable; other metrics unreliable.")
 
-    if len(benign_domains) < 100 or len(malicious_domains) < 100:
-        print("  WARNING: Insufficient training data for meaningful results")
-        print("  Generating additional synthetic data...")
+    print("\n[5/6] Full model vs length-ablated model...")
+    full_mean, full_sd = cv_auc(X, y)
+    print(f"  full (8 features)       CV AUC: {full_mean:.4f} (+/- {full_sd:.4f})")
+    keep = [i for i in range(X.shape[1]) if i != LENGTH_IDX]
+    X_abl = X[:, keep]
+    abl_mean, abl_sd = cv_auc(X_abl, y)
+    print(f"  length-ablated (7 feat) CV AUC: {abl_mean:.4f} (+/- {abl_sd:.4f})")
+    print(f"  cost of removing length: {abl_mean - full_mean:+.4f} AUC")
 
-    # Step 2: Extract features
-    print("\n[2/5] Extracting features...")
+    print("\n[6/6] Training deployed model (length-ablated)...")
+    Xtr, Xte, ytr, yte = train_test_split(X_abl, y, test_size=0.2, random_state=SEED, stratify=y)
+    clf = lgb.train(PARAMS, lgb.Dataset(Xtr, label=ytr), num_boost_round=200,
+                    valid_sets=[lgb.Dataset(Xte, label=yte)], callbacks=[lgb.log_evaluation(0)])
+    test_pred = clf.predict(Xte)
+    test_auc = roc_auc_score(yte, test_pred)
+    tn, fp, fn, tp = confusion_matrix(yte, (test_pred > 0.5).astype(int)).ravel()
+    print(f"  trees: {clf.num_trees()} | test AUC: {test_auc:.4f}")
+    print(f"  TN={tn} FP={fp} FN={fn} TP={tp}")
+    print(f"  TPR: {tp/max(tp+fn,1):.2%} | FPR: {fp/max(tn+fp,1):.2%}")
 
-    X_benign = []
-    for domain in benign_domains:
-        features = extract_dga_domain_features(domain)
-        X_benign.append([
-            features["domain_entropy"],
-            features["bigram_log_likelihood_2"],
-            features["bigram_log_likelihood_3"],
-            features["consonant_vowel_ratio"],
-            features["digit_ratio"],
-            features["domain_length"],
-            features["tld_length"],
-            1 if features["has_dictionary_word"] else 0,
-        ])
+    ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+    import joblib; joblib.dump(clf, ARTIFACT_DIR / "dga_classifier.joblib")
 
-    X_malicious = []
-    for domain in malicious_domains:
-        features = extract_dga_domain_features(domain)
-        X_malicious.append([
-            features["domain_entropy"],
-            features["bigram_log_likelihood_2"],
-            features["bigram_log_likelihood_3"],
-            features["consonant_vowel_ratio"],
-            features["digit_ratio"],
-            features["domain_length"],
-            features["tld_length"],
-            1 if features["has_dictionary_word"] else 0,
-        ])
-
-    # Combine
-    X = np.array(X_benign + X_malicious, dtype=float)
-    y = np.array([0] * len(X_benign) + [1] * len(X_malicious))
-
-    print(f"  Feature matrix shape: {X.shape}")
-    print(f"  Label distribution: {dict(zip(*np.unique(y, return_counts=True)))}")
-
-    # Step 3: Train/test split
-    print("\n[3/5] Training/test split...")
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-
-    print(f"  Train size: {len(X_train)}, Test size: {len(X_test)}")
-
-    # Step 4: Train LightGBM model
-    print("\n[4/5] Training LightGBM model...")
-    try:
-        import lightgbm as lgb
-
-        train_data = lgb.Dataset(X_train, label=y_train)
-        test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
-
-        params = {
-            "objective": "binary",
-            "metric": "auc",
-            "boosting_type": "gbdt",
-            "learning_rate": 0.1,
-            "num_leaves": 31,
-            "feature_fraction": 0.8,
-            "bagging_fraction": 0.8,
-            "bagging_freq": 5,
-            "verbosity": -1,
-        }
-
-        clf = lgb.train(
-            params,
-            train_data,
-            num_boost_round=100,
-            valid_sets=[train_data, test_data],
-            early_stopping_rounds=10,
-        )
-
-        # Step 5: Evaluate
-        print("\n[5/5] Evaluating model...")
-        train_pred = clf.predict(X_train)
-        test_pred = clf.predict(X_test)
-
-        train_auc = roc_auc_score(y_train, train_pred)
-        test_auc = roc_auc_score(y_test, test_pred)
-
-        test_pred_class = (test_pred > 0.5).astype(int)
-        cm = confusion_matrix(y_test, test_pred_class)
-        tn, fp, fn, tp = cm.ravel() if cm.size == 4 else (0, 0, 0, 0)
-
-        print(f"  Train AUC: {train_auc:.4f}")
-        print(f"  Test AUC:  {test_auc:.4f}")
-        print(f"  Confusion Matrix: TN={tn}, FP={fp}, FN={fn}, TP={tp}")
-        print(f"  True Positive Rate: {tp / max(tp + fn, 1):.2%}")
-        print(f"  False Positive Rate: {fp / max(tn + fp, 1):.2%}")
-
-        # Save model
-        artifacts_dir = PROJECT_ROOT / "app" / "models" / "artifacts"
-        artifacts_dir.mkdir(parents=True, exist_ok=True)
-
-        model_path = artifacts_dir / "dga_classifier.joblib"
-        import joblib
-        joblib.dump(clf, model_path)
-
-        print(f"\n  Model saved to: {model_path}")
-        print("=" * 60)
-        print("DGA training complete!")
-        print("=" * 60)
-
-    except ImportError as e:
-        print(f"  ERROR: LightGBM not available: {e}")
-        print("  Install with: pip install lightgbm")
-        sys.exit(1)
-    except Exception as e:
-        print(f"  ERROR: Training failed: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    report = {
+        "trained_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "corpus": {"benign_n": len(benign), "dga_n": len(malicious),
+                   "benign_sources": ["dga_domains.csv (legit rows)", "Tranco top-1m"],
+                   "dga_source": "dga_domains.csv (DGArchive-derived)", **lrep},
+        "length_only_baseline_cv_auc": round(len_mean,4),
+        "length_only_baseline_cv_sd": round(len_sd,4),
+        "full_model_cv_auc": round(full_mean,4),
+        "length_ablated_cv_auc": round(abl_mean,4),
+        "length_ablated_cv_sd": round(abl_sd,4),
+        "deployed_model": "length-ablated",
+        "deployed_features": [n for i,n in enumerate(FEATURE_NAMES) if i != LENGTH_IDX],
+        "deployed_test_auc": round(float(test_auc),4),
+        "deployed_trees": clf.num_trees(),
+        "confusion": {"tn":int(tn),"fp":int(fp),"fn":int(fn),"tp":int(tp)},
+        "seed": SEED,
+    }
+    EVAL_OUT.write_text(json.dumps(report, indent=2))
+    print(f"\n  Model  -> {ARTIFACT_DIR/'dga_classifier.joblib'}")
+    print(f"  Report -> {EVAL_OUT}")
+    print("="*64)
 
 
 if __name__ == "__main__":
-    train()
+    main()

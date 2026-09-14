@@ -96,26 +96,33 @@ async def main():
         print(f"    => {r['flows_per_sec']} flows/s, avg latency {r['latency_ms_avg']}ms, p95 {r['latency_ms_p95']}ms, p99 {r['latency_ms_p99']}ms")
         print()
 
-    # Find best sustained rate
-    best = max(results, key=lambda x: x[1]["flows_per_sec"])
-    worst_lat = min(results, key=lambda x: x[1]["latency_ms_p95"])
+    # Report the SINGLE run that represents sustained operation — never mix
+    # throughput from one configuration with latency from another.
+    sustained = next(r for l, r in results if "serial" in l)
+    burst = next(r for l, r in results if "no delay" in l)
 
-    print(f"{'='*60}")
-    print(f"THROUGHPUT MEASUREMENT RESULTS:")
-    print(f"  Sustained peak: {best[1]['flows_per_sec']} flows/sec ({best[0]})")
-    print(f"  Best latency:   {worst_lat[1]['latency_ms_p95']}ms p95 ({worst_lat[0]})")
-    print(f"  Measured on:    {best[1]['n_flows']} flows from lab_mixed.json")
-    print(f"  All flows processed: YES (0 drops)")
-    print(f"  Return path: NONE (read-only pipeline)")
-    print(f"{'='*60}")
+    print(f"{'='*64}")
+    print("THROUGHPUT MEASUREMENT RESULTS  (single-run, no cross-run mixing)")
+    print(f"  Sustained (serial baseline): {sustained['flows_per_sec']} flows/sec")
+    print(f"    latency  p50 {sustained['latency_ms_p50']} ms | "
+          f"p95 {sustained['latency_ms_p95']} ms | p99 {sustained['latency_ms_p99']} ms")
+    print(f"  Burst (no pacing):           {burst['flows_per_sec']} flows/sec")
+    print(f"    latency  p50 {burst['latency_ms_p50']} ms | "
+          f"p95 {burst['latency_ms_p95']} ms | p99 {burst['latency_ms_p99']} ms")
+    print(f"  Measured on: {sustained['n_flows']} flows from lab_mixed.json")
+    print(f"  Drops: 0 | Return path: NONE (read-only pipeline)")
+    print(f"{'='*64}")
+    best = sustained
 
     # Write results for README
     out = {
         "measured_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "peak_flows_per_sec": best[1]["flows_per_sec"],
-        "peak_p95_latency_ms": best[1]["latency_ms_p95"],
-        "peak_p99_latency_ms": best[1]["latency_ms_p99"],
-        "n_flows_tested": best[1]["n_flows"],
+        "sustained_flows_per_sec": best["flows_per_sec"],
+        "burst_flows_per_sec": burst["flows_per_sec"],
+        "sustained_p50_latency_ms": best["latency_ms_p50"],
+        "sustained_p95_latency_ms": best["latency_ms_p95"],
+        "sustained_p99_latency_ms": best["latency_ms_p99"],
+        "n_flows_tested": best["n_flows"],
         "zero_drops": True,
         "return_path": "NONE",
         "results": [{**r[1], "label": r[0]} for r in results],

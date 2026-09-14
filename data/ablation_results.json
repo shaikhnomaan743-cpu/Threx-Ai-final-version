@@ -1,0 +1,258 @@
+{
+  "measured_at": "2026-09-14T02:40:20Z",
+  "two_sided_features_removed": [
+    "syn_to_ack_ratio",
+    "amplification_ratio",
+    "byte_ratio_outbound"
+  ],
+  "one_sided_substitutes": [
+    "packet_rate_one_sided",
+    "amplifier_request_rate",
+    "outbound_bytes_abs",
+    "bytes_per_packet"
+  ],
+  "n_flows": {
+    "ddos": 20,
+    "c2_beacon": 20,
+    "dga": 30,
+    "dns_tunnel": 15,
+    "tls_malware": 15,
+    "recon": 10,
+    "exfiltration": 10,
+    "benign": 50
+  },
+  "per_mode": {
+    "bidirectional": {
+      "ddos": {
+        "precision": 0.8889,
+        "recall": 0.8,
+        "f1": 0.8421,
+        "tp": 16,
+        "fp": 2,
+        "fn": 4
+      },
+      "c2_beacon": {
+        "precision": 0.3019,
+        "recall": 0.8,
+        "f1": 0.4384,
+        "tp": 16,
+        "fp": 37,
+        "fn": 4
+      },
+      "dga": {
+        "precision": 1.0,
+        "recall": 0.9,
+        "f1": 0.9474,
+        "tp": 27,
+        "fp": 0,
+        "fn": 3
+      },
+      "dns_tunnel": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 15,
+        "fp": 0,
+        "fn": 0
+      },
+      "tls_malware": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 15,
+        "fp": 0,
+        "fn": 0
+      },
+      "recon": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      },
+      "exfiltration": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      }
+    },
+    "unidirectional": {
+      "ddos": {
+        "precision": 0.8889,
+        "recall": 0.8,
+        "f1": 0.8421,
+        "tp": 16,
+        "fp": 2,
+        "fn": 4
+      },
+      "c2_beacon": {
+        "precision": 0.3019,
+        "recall": 0.8,
+        "f1": 0.4384,
+        "tp": 16,
+        "fp": 37,
+        "fn": 4
+      },
+      "dga": {
+        "precision": 1.0,
+        "recall": 0.9,
+        "f1": 0.9474,
+        "tp": 27,
+        "fp": 0,
+        "fn": 3
+      },
+      "dns_tunnel": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 15,
+        "fp": 0,
+        "fn": 0
+      },
+      "tls_malware": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 15,
+        "fp": 0,
+        "fn": 0
+      },
+      "recon": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      },
+      "exfiltration": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      }
+    },
+    "recovered": {
+      "ddos": {
+        "precision": 0.9091,
+        "recall": 1.0,
+        "f1": 0.9524,
+        "tp": 20,
+        "fp": 2,
+        "fn": 0
+      },
+      "c2_beacon": {
+        "precision": 0.3019,
+        "recall": 0.8,
+        "f1": 0.4384,
+        "tp": 16,
+        "fp": 37,
+        "fn": 4
+      },
+      "dga": {
+        "precision": 1.0,
+        "recall": 0.9,
+        "f1": 0.9474,
+        "tp": 27,
+        "fp": 0,
+        "fn": 3
+      },
+      "dns_tunnel": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 15,
+        "fp": 0,
+        "fn": 0
+      },
+      "tls_malware": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 15,
+        "fp": 0,
+        "fn": 0
+      },
+      "recon": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      },
+      "exfiltration": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      }
+    }
+  },
+  "chart": [
+    {
+      "threat_class": "ddos",
+      "bidirectional_f1": 0.8421,
+      "unidirectional_f1": 0.8421,
+      "recovered_f1": 0.9524,
+      "cost_of_one_way": 0.0,
+      "regained_by_substitutes": 0.1103
+    },
+    {
+      "threat_class": "c2_beacon",
+      "bidirectional_f1": 0.4384,
+      "unidirectional_f1": 0.4384,
+      "recovered_f1": 0.4384,
+      "cost_of_one_way": 0.0,
+      "regained_by_substitutes": 0.0
+    },
+    {
+      "threat_class": "dga",
+      "bidirectional_f1": 0.9474,
+      "unidirectional_f1": 0.9474,
+      "recovered_f1": 0.9474,
+      "cost_of_one_way": 0.0,
+      "regained_by_substitutes": 0.0
+    },
+    {
+      "threat_class": "dns_tunnel",
+      "bidirectional_f1": 1.0,
+      "unidirectional_f1": 1.0,
+      "recovered_f1": 1.0,
+      "cost_of_one_way": 0.0,
+      "regained_by_substitutes": 0.0
+    },
+    {
+      "threat_class": "tls_malware",
+      "bidirectional_f1": 1.0,
+      "unidirectional_f1": 1.0,
+      "recovered_f1": 1.0,
+      "cost_of_one_way": 0.0,
+      "regained_by_substitutes": 0.0
+    },
+    {
+      "threat_class": "recon",
+      "bidirectional_f1": 1.0,
+      "unidirectional_f1": 1.0,
+      "recovered_f1": 1.0,
+      "cost_of_one_way": 0.0,
+      "regained_by_substitutes": 0.0
+    },
+    {
+      "threat_class": "exfiltration",
+      "bidirectional_f1": 1.0,
+      "unidirectional_f1": 1.0,
+      "recovered_f1": 1.0,
+      "cost_of_one_way": 0.0,
+      "regained_by_substitutes": 0.0
+    }
+  ]
+}

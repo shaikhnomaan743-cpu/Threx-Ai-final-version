@@ -54,3 +54,18 @@ yarn-error.log*
 
 # NOTE: trained model artifacts (*.joblib) ARE committed on purpose —
 # the backend auto-loads them on startup. See MODEL_DOCUMENTATION.md.
+
+# -- Datasets (download separately, see backend/data/README.md) --
+dga_domains.csv
+tranco_*.csv.zip
+backend/data/top-1m.csv
+backend/data/dga_domains.csv
+backend/data/*.zip
+
+# -- Local scratch / deck tooling, not part of the product --
+analyze_existing_ppt.py
+analyze_sih_format.py
+create_sih_presentation.py
+extract_pdf_text.py
+literature_review_extracted.txt
+*.bak

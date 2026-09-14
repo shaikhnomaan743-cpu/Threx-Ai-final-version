@@ -20,16 +20,16 @@ from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cybersentinel_backend.app.config import settings
-from cybersentinel_backend.app.ingest.pcap_reader import pcap_reader
-from cybersentinel_backend.app.ingest.flow_builder import FlowBuilder
-from cybersentinel_backend.app.features.exfil_features import (
+from app.config import settings
+from app.ingest.pcap_reader import pcap_reader
+from app.ingest.flow_builder import FlowBuilder
+from app.features.exfil_features import (
     compute_outbound_inbound_ratio,
     compute_session_duration_stats,
     compute_byte_skew,
     extract_exfil_features,
 )
-from cybersentinel_backend.app.models.exfil_detector import ExfiltrationDetector
+from app.models.exfil_detector import ExfiltrationDetector
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PCAP_DIR = PROJECT_ROOT / "data" / "pcaps"

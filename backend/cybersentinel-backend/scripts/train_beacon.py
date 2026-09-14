@@ -21,16 +21,16 @@ from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cybersentinel_backend.app.config import settings
-from cybersentinel_backend.app.ingest.pcap_reader import pcap_reader
-from cybersentinel_backend.app.ingest.flow_builder import FlowBuilder
-from cybersentinel_backend.app.features.beacon_features import (
+from app.config import settings
+from app.ingest.pcap_reader import pcap_reader
+from app.ingest.flow_builder import FlowBuilder
+from app.features.beacon_features import (
     compute_inter_arrival_times,
     compute_coefficient_of_variation,
     compute_fft_periodicity,
     compute_jitter,
 )
-from cybersentinel_backend.app.models.beacon_detector import BeaconDetector
+from app.models.beacon_detector import BeaconDetector
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PCAP_DIR = PROJECT_ROOT / "data" / "pcaps"

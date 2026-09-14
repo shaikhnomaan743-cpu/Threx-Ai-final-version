@@ -214,3 +214,63 @@ HEALTHCHECK curl -f http://localhost:8000/health
 ## License / Attribution
 
 See `data/DATASETS.md` for Tranco, DGArchive, CIC-IDS, CTU-13, JA3/MTA licenses. Internal code is proprietary for this demo; dataset artifacts follow their upstream licenses (CC0/BSD/research-use).
+
+## Measured results (regenerate with the scripts below — do not hand-edit)
+
+### Throughput and latency  — PS constraint (d)
+`PYTHONPATH=. python3 ../../scripts/measure_throughput.py`
+
+| run | flows/sec | p50 | p95 | p99 |
+|---|---|---|---|---|
+| sustained (serial) | 279.0 | 1.69 ms | 17.76 ms | 20.93 ms |
+| burst (no pacing) | 198.0 | 1.69 ms | 18.69 ms | 21.5 ms |
+
+180 flows from `lab_mixed.json`, zero drops. Throughput and latency are quoted
+from the *same* run — an earlier version of this script reported the best
+throughput from one configuration alongside the best latency from another.
+
+### DGA classifier — real corpora
+`PYTHONPATH=. python3 scripts/train_dga.py`
+
+Corpus: 89,917 benign (dga_domains.csv (legit rows), Tranco top-1m)
+and 52,665 DGA (DGArchive-derived: cryptolocker, newgoz, goz).
+
+| metric | value |
+|---|---|
+| length-only baseline CV AUC | 0.9384 |
+| full model (8 features) CV AUC | 0.9966 |
+| **deployed, length-ablated (7 features) CV AUC** | **0.9966 ± 0.0001** |
+| deployed test AUC | 0.9966 |
+| TPR / FPR | 96.1% / 2.4% |
+
+`domain_length` is excluded from the deployed model. The previous synthetic
+corpus was separable by label length alone (every DGA sample ≥12 chars, 98% of
+benign <12), which is why it scored AUC 1.0. On the real corpus a length-only
+baseline reaches 0.9384, and removing length costs
++0.0000 AUC — the signal is real but fully redundant.
+
+### Unidirectional resilience ablation
+`PYTHONPATH=. python3 scripts/run_ablation.py`
+
+Two-sided features removed to simulate a true one-way tap:
+`syn_to_ack_ratio`, `amplification_ratio`, `byte_ratio_outbound`.
+
+| threat class | bidirectional F1 | unidirectional F1 | cost | + one-sided substitutes | regained |
+|---|---|---|---|---|---|
+| ddos | 0.842 | 0.842 | +0.000 | 0.952 | +0.110 |
+| c2_beacon | 0.438 | 0.438 | +0.000 | 0.438 | +0.000 |
+| dga | 0.947 | 0.947 | +0.000 | 0.947 | +0.000 |
+| dns_tunnel | 1.000 | 1.000 | +0.000 | 1.000 | +0.000 |
+| tls_malware | 1.000 | 1.000 | +0.000 | 1.000 | +0.000 |
+| recon | 1.000 | 1.000 | +0.000 | 1.000 | +0.000 |
+| exfiltration | 1.000 | 1.000 | +0.000 | 1.000 | +0.000 |
+
+**Finding.** On this corpus the cost of one-way visibility is 0.000 F1 across
+all seven classes: the detectors already carry enough one-sided signal that
+removing the two-sided features changes nothing. Replacing them with explicit
+one-sided substitutes (packet rate, amplifier-port request rate, absolute
+outbound volume) *improves* DDoS F1 by +0.110, above the bidirectional baseline.
+
+**Known limitation.** C2 beacon precision is 0.30 — 37 false
+positives across 50 benign flows. The ablation surfaced this; it is a detector
+quality problem, not a directionality one, and it is the next thing to fix.

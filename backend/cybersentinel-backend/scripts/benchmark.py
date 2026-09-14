@@ -21,12 +21,12 @@ from typing import Dict, Any, List
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cybersentinel_backend.app.config import settings
-from cybersentinel_backend.app.ingest.pcap_reader import pcap_reader
-from cybersentinel_backend.app.ingest.flow_builder import FlowBuilder
-from cybersentinel_backend.app.inference.engine import InferenceEngine
-from cybersentinel_backend.app.metrics.collector import FlowMetrics, get_metrics
-from cybersentinel_backend.app.alerts.manager import AlertManager
+from app.config import settings
+from app.ingest.pcap_reader import pcap_reader
+from app.ingest.flow_builder import FlowBuilder
+from app.inference.engine import InferenceEngine
+from app.metrics.collector import FlowMetrics, get_metrics
+from app.alerts.manager import AlertManager
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PCAP_DIR = PROJECT_ROOT / "data" / "pcaps"

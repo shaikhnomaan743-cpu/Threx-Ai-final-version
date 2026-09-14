@@ -20,15 +20,15 @@ from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cybersentinel_backend.app.config import settings
-from cybersentinel_backend.app.ingest.pcap_reader import pcap_reader
-from cybersentinel_backend.app.ingest.flow_builder import FlowBuilder
-from cybersentinel_backend.app.features.tls_features import (
+from app.config import settings
+from app.ingest.pcap_reader import pcap_reader
+from app.ingest.flow_builder import FlowBuilder
+from app.features.tls_features import (
     extract_ja3,
     extract_ja4,
     extract_packet_size_sequence,
 )
-from cybersentinel_backend.app.models.tls_classifier import (
+from app.models.tls_classifier import (
     TLSMalwareClassifier,
     get_tls_malware_classifier,
 )

@@ -21,11 +21,11 @@ from typing import List, Dict, Any
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cybersentinel_backend.app.config import settings
-from cybersentinel_backend.app.alerts.schema import Alert, Evidence
-from cybersentinel_backend.app.alerts.manager import AlertManager
-from cybersentinel_backend.app.db.session import init_db_session, close_db_session, engine
-from cybersentinel_backend.app.db.models import AlertRecord, FlowRecord, MetricSnapshot
+from app.config import settings
+from app.alerts.schema import Alert, Evidence
+from app.alerts.manager import AlertManager
+from app.db.session import init_db_session, close_db_session, engine
+from app.db.models import AlertRecord, FlowRecord, MetricSnapshot
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 

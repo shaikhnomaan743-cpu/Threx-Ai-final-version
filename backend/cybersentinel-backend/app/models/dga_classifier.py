@@ -86,7 +86,6 @@ def train_dga_model(
             features["bigram_log_likelihood_3"],
             features["consonant_vowel_ratio"],
             features["digit_ratio"],
-            features["domain_length"],
             features["tld_length"],
             1 if features["has_dictionary_word"] else 0,
         ])
@@ -99,7 +98,6 @@ def train_dga_model(
             features["bigram_log_likelihood_3"],
             features["consonant_vowel_ratio"],
             features["digit_ratio"],
-            features["domain_length"],
             features["tld_length"],
             1 if features["has_dictionary_word"] else 0,
         ])
@@ -127,17 +125,28 @@ def train_dga_model(
     return clf, train_auc, test_auc
 
 
+DEPLOYED_FEATURE_NAMES = [
+    "domain_entropy", "bigram_log_likelihood_2", "bigram_log_likelihood_3",
+    "consonant_vowel_ratio", "digit_ratio", "tld_length", "has_dictionary_word",
+]
+
+
 def predict_dga(model: Any, domain: str) -> dict:
     if not LIGHTGBM_AVAILABLE:
         raise ImportError("LightGBM not available")
     features = extract_dga_domain_features(domain)
+    # domain_length is deliberately excluded. The previous corpus was
+    # separable by label length alone, so the classifier is now trained
+    # without it; a length-only baseline scores CV AUC 0.938 while the
+    # length-ablated model scores 0.9966, i.e. length carries real but
+    # fully redundant signal. Keep this vector in sync with
+    # DEPLOYED_FEATURE_NAMES and with scripts/train_dga.py.
     feature_vector = np.array([[
         features["domain_entropy"],
         features["bigram_log_likelihood_2"],
         features["bigram_log_likelihood_3"],
         features["consonant_vowel_ratio"],
         features["digit_ratio"],
-        features["domain_length"],
         features["tld_length"],
         1 if features["has_dictionary_word"] else 0,
     ]], dtype=float)

@@ -23,20 +23,20 @@ import numpy as np
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cybersentinel_backend.app.config import settings
-from cybersentinel_backend.app.ingest.pcap_reader import pcap_reader, PacketInfo
-from cybersentinel_backend.app.ingest.flow_builder import FlowBuilder, FlowState
-from cybersentinel_backend.app.features.ddos_features import (
+from app.config import settings
+from app.ingest.pcap_reader import pcap_reader, PacketInfo
+from app.ingest.flow_builder import FlowBuilder, FlowState
+from app.features.ddos_features import (
     extract_ddos_features,
     compute_syn_flood_ratio,
     compute_udp_amplification_ratio,
     compute_packet_rate,
     compute_byte_rate,
 )
-from cybersentinel_backend.app.alerts.schema import Evidence
+from app.alerts.schema import Evidence
 
 # Import the detector module
-from cybersentinel_backend.app.models.ddos_detector import DDOSDetector, get_ddos_detector
+from app.models.ddos_detector import DDOSDetector, get_ddos_detector
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PCAP_DIR = PROJECT_ROOT / "data" / "pcaps"
