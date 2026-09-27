@@ -1,0 +1,92 @@
+
+id=29 name=object 29 type=TEXT_BOX (17) geo=(8.16,1.14 2.19x0.24)
+  wrap=True autosize=SHAPE_TO_FIT_TEXT (1) margins L0.00 T0.01 B0.00
+  P0 lvl=0 align=None spcB=12065 spcA=None ls=1.0
+     R0 sz=13.0 b=True name=Cambria color=162239 len=12
+        'Feasibility:'
+     R1 sz=13.0 b=True name=Cambria color=162239 len=1
+        ' '
+     R2 sz=13.0 b=True name=Cambria color=162239 len=2
+        'it'
+     R3 sz=13.0 b=True name=Cambria color=162239 len=1
+        ' '
+     R4 sz=13.0 b=True name=Cambria color=162239 len=7
+        'already'
+     R5 sz=13.0 b=True name=Cambria color=162239 len=1
+        ' '
+     R6 sz=13.0 b=True name=Cambria color=162239 len=4
+        'runs'
+
+id=31 name=object 31 type=TEXT_BOX (17) geo=(8.16,1.53 4.02x0.79)
+  wrap=True autosize=NONE (0) margins L0.00 T0.01 B0.00
+  P0 lvl=0 align=LEFT (1) spcB=11430 spcA=None ls=1.05
+     R0 sz=9.0 b=False name=Calibri color=3E495A len=128
+        'Prototype deployed: live SOC dashboard, WebSocket feed, report generator. Software-only on commodity servers; modular detectors.'
+  P1 lvl=0 align=LEFT (1) spcB=39878 spcA=None ls=1.0
+     R0 sz=8.5 b=False name=Calibri color=3E495A len=162
+        'Detection 2,800 → 13,394 flows/sec on one core (~7×; batched LightGBM, incremental fan-out, bounded state). Regression gate: identical to baseline on every class.'
+  P2 lvl=0 align=LEFT (1) spcB=27940 spcA=None ls=1.0
+     R0 sz=8.5 b=False name=Calibri color=3E495A len=146
+        'Multi-core pipeline built (receiver → N workers → dst aggregators). 120,000 flows/sec is a target, hardware validation in progress — not measured.'
+
+id=35 name=object 35 type=TEXT_BOX (17) geo=(8.16,2.57 2.17x0.24)
+  wrap=True autosize=SHAPE_TO_FIT_TEXT (1) margins L0.00 T0.01 B0.00
+  P0 lvl=0 align=None spcB=12065 spcA=None ls=1.0
+     R0 sz=13.0 b=True name=Cambria color=162239 len=3
+        'All'
+     R1 sz=13.0 b=True name=Cambria color=162239 len=1
+        ' '
+     R2 sz=13.0 b=True name=Cambria color=162239 len=4
+        'five'
+     R3 sz=13.0 b=True name=Cambria color=162239 len=1
+        ' '
+     R4 sz=13.0 b=True name=Cambria color=162239 len=2
+        'PS'
+     R5 sz=13.0 b=True name=Cambria color=162239 len=12
+        ' constraints'
+     R6 sz=13.0 b=True name=Cambria color=162239 len=4
+        ' met'
+
+id=36 name=object 36 type=TEXT_BOX (17) geo=(8.46,3.27 1.93x0.20)
+  wrap=True autosize=SHAPE_TO_FIT_TEXT (1) margins L0.00 T0.01 B0.00
+  P0 lvl=0 align=None spcB=13335 spcA=None ls=1.0
+     R0 sz=10.0 b=True name=Calibri color=1F2937 len=3
+        '(b)'
+     R1 sz=10.0 b=True name=Calibri color=1F2937 len=1
+        ' '
+     R2 sz=10.0 b=True name=Calibri color=1F2937 len=2
+        'No'
+     R3 sz=10.0 b=True name=Calibri color=1F2937 len=1
+        ' '
+     R4 sz=10.0 b=True name=Calibri color=1F2937 len=10
+        'decryption'
+     R5 sz=10.0 b=True name=Calibri color=1F2937 len=1
+        ' '
+     R6 sz=10.0 b=None name=Calibri color=798599 len=8
+        'metadata'
+     R7 sz=10.0 b=None name=Calibri color=798599 len=1
+        ' '
+     R8 sz=10.0 b=None name=Calibri color=798599 len=4
+        'only'
+
+id=39 name=object 39 type=TEXT_BOX (17) geo=(7.94,4.58 1.18x0.19)
+  wrap=True autosize=SHAPE_TO_FIT_TEXT (1) margins L0.00 T0.02 B0.00
+  P0 lvl=0 align=None spcB=13970 spcA=None ls=1.0
+     R0 sz=9.5 b=True name=Calibri color=0D7B7A len=1
+        'R'
+     R1 sz=9.5 b=True name=Calibri color=0D7B7A len=1
+        ' '
+     R2 sz=9.5 b=True name=Calibri color=0D7B7A len=4
+        'UNNI'
+     R3 sz=9.5 b=True name=Calibri color=0D7B7A len=1
+        ' '
+     R4 sz=9.5 b=True name=Calibri color=0D7B7A len=2
+        'NG'
+     R5 sz=9.5 b=True name=Calibri color=0D7B7A len=1
+        ' '
+     R6 sz=9.5 b=True name=Calibri color=0D7B7A len=1
+        'T'
+     R7 sz=9.5 b=True name=Calibri color=0D7B7A len=1
+        ' '
+     R8 sz=9.5 b=True name=Calibri color=0D7B7A len=4
+        'ODAY'

@@ -97,8 +97,44 @@ class FlowBuilder:
             logger.debug(f"[FlowBuilder] Cleaned up {len(expired)} expired flows")
 
     def get_flows(self) -> Dict[str, FlowState]:  # type: ignore
-        """Return all current flow states."""
+        """Return all current flow states (a snapshot; does NOT remove them).
+
+        For streaming ingest use export_ready(): get_flows() on a timer
+        re-submits every still-active flow on every tick, so the same flow is
+        scored and counted many times.
+        """
         return self._flows.copy()
+
+    def export_ready(self, now: Optional[float] = None,
+                     idle_timeout: float = 15.0,
+                     active_timeout: float = 30.0) -> List[FlowState]:  # type: ignore
+        """Remove and return flows that are finished, NetFlow-style.
+
+        A flow is exported exactly once, when the first of these holds:
+          - TCP FIN or RST was seen (connection closed),
+          - no packet for `idle_timeout` seconds (inactive timeout),
+          - it has been open `active_timeout` seconds (active timeout; a
+            long-lived connection keeps going as a fresh record, which bounds
+            detection latency for floods and slow-rate attacks).
+        Times are packet timestamps, so this works for live capture and for
+        PCAP replay alike.
+        """
+        if now is None:
+            now = time.time()
+        out = []
+        for k, f in list(self._flows.items()):
+            last = f.end_time if f.end_time > 0 else now
+            first = f.start_time if f.start_time != float("inf") else now
+            if getattr(f, "closed", False) or (now - last) >= idle_timeout \
+                    or (now - first) >= active_timeout:
+                out.append(self._flows.pop(k))
+        return out
+
+    def export_all(self) -> List[FlowState]:  # type: ignore
+        """Remove and return every flow (end of a PCAP file / shutdown)."""
+        out = list(self._flows.values())
+        self._flows.clear()
+        return out
 
     def get_flow(self, key: str) -> Optional[FlowState]:  # type: ignore
         """Get a specific flow state by key."""

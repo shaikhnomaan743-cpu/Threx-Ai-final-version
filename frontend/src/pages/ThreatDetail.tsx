@@ -1,15 +1,45 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Shield, AlertTriangle, CheckCircle2, Download, Flag, ArrowRight } from 'lucide-react';
-import { fetchThreats } from '../lib/api';
+import { fetchThreatById } from '../lib/api';
 import type { Alert } from '../lib/types';
 import { formatBytes } from '../lib/utils';
+import { downloadBlob, toast } from '../lib/export';
 
 export default function ThreatDetail() {
   const { id } = useParams();
   const [alert, setAlert] = useState<Alert|null>(null);
-  useEffect(()=>{ fetchThreats(100).then(all=>{ const found=all.find(a=>a.id===id); setAlert(found||all[0]); }); },[id]);
-  if(!alert) return <div style={{padding:40,textAlign:'center',color:'var(--color-text-muted)'}}>Loading investigation…</div>;
+  const [state, setState] = useState<'loading'|'ok'|'notfound'|'error'>('loading');
+  const [errMsg, setErrMsg] = useState('');
+
+  // This used to do fetchThreats(100) and fall back to `all[0]` when the id was
+  // not in the first 100 rows — silently rendering a DIFFERENT threat under the
+  // requested URL, with no indication anything was wrong. It now fetches the
+  // specific alert and distinguishes not-found from a fetch failure.
+  useEffect(()=>{
+    if(!id) return;
+    setState('loading');
+    fetchThreatById(id)
+      .then(a=>{ if(a){ setAlert(a); setState('ok'); } else setState('notfound'); })
+      .catch(e=>{ setErrMsg((e as Error).message); setState('error'); });
+  },[id]);
+
+  if(state==='loading') return <div style={{padding:40,textAlign:'center',color:'var(--color-text-muted)'}}>Loading investigation…</div>;
+  if(state==='notfound') return (
+    <div style={{padding:40,textAlign:'center'}}>
+      <p style={{color:'var(--color-text-dim)'}}>No alert with id <span className="num">{id}</span>.</p>
+      <Link to="/threats" style={{color:'var(--color-teal)',fontSize:13}}>Back to threats</Link>
+    </div>);
+  if(state==='error'||!alert) return (
+    <div style={{padding:40,textAlign:'center'}}>
+      <p style={{color:'var(--color-red)',fontSize:13}}>Could not load alert: {errMsg}</p>
+      <Link to="/threats" style={{color:'var(--color-teal)',fontSize:13}}>Back to threats</Link>
+    </div>);
+
+  const exportAlert = () => {
+    downloadBlob(`threx-alert-${alert.id}.json`, JSON.stringify(alert,null,2), 'application/json');
+    toast('Alert exported as JSON');
+  };
 
   const maxContrib = Math.max(...alert.evidence.map(e=>e.contribution||0));
 
@@ -31,9 +61,13 @@ export default function ThreatDetail() {
           </div>
           {/* actions */}
           <div style={{display:'flex',gap:8}}>
-            <button className="btn btn-ghost" style={{display:'flex',alignItems:'center',gap:6}}><CheckCircle2 size={14}/> Mark reviewed</button>
-            <button className="btn btn-ghost" style={{display:'flex',alignItems:'center',gap:6,borderColor:'rgba(240,64,80,.3)',color:'var(--color-red)'}}><Flag size={14}/> Escalate</button>
-            <button className="btn btn-ghost" style={{display:'flex',alignItems:'center',gap:6}}><Download size={14}/> Export</button>
+            {/* Triage state has no backend representation yet: the Alert schema
+                has no status field and there is no PATCH endpoint. These are
+                shown disabled with an explicit roadmap note rather than wired to
+                a no-op handler that looks like it worked. */}
+            <button className="btn btn-ghost" disabled title="Phase 2 — alert triage state is not yet persisted server-side" style={{display:'flex',alignItems:'center',gap:6,opacity:.45,cursor:'not-allowed'}}><CheckCircle2 size={14}/> Mark reviewed</button>
+            <button className="btn btn-ghost" disabled title="Phase 2 — alert triage state is not yet persisted server-side" style={{display:'flex',alignItems:'center',gap:6,borderColor:'rgba(240,64,80,.3)',color:'var(--color-red)',opacity:.45,cursor:'not-allowed'}}><Flag size={14}/> Escalate</button>
+            <button className="btn btn-ghost" onClick={exportAlert} style={{display:'flex',alignItems:'center',gap:6}}><Download size={14}/> Export</button>
           </div>
         </div>
       </div>

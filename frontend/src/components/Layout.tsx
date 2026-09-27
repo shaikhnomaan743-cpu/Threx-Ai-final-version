@@ -339,7 +339,9 @@ export default function Layout() {
                       analyst@threx.ai
                     </div>
                   </div>
-                  <button className="profile-item">
+                  {/* No profile/settings route exists. Shown disabled with a
+                      reason instead of a button that silently does nothing. */}
+                  <button className="profile-item" disabled title="Phase 2 — user profiles are not implemented" style={{ opacity: .45, cursor: 'not-allowed' }}>
                     <User size={14} /> Profile
                   </button>
                   <button

@@ -143,8 +143,15 @@ async def run_mode(mode: str, flows_by_class) -> dict:
             alerts = await process_flow(fs, mgr, engine, AblationSink(), get_metrics()) or []
             fired = {getattr(a, "threat_class", "") for a in alerts}
 
-            if mode == "recovered":
-                fired |= one_sided_rules(work)
+            # `one_sided_rules()` was a standalone approximation of what a
+            # fixed detector should do, bolted on to "recovered" mode before
+            # the live DDoSDetector/ExfiltrationDetector actually implemented
+            # one-sided scoring. Now that they do, this loose secondary rule
+            # (rate > 50 pps, no packet-size gate) only adds false positives
+            # the real, better-calibrated detector had already ruled out —
+            # e.g. it flags recon flows the live detector correctly ignores.
+            # Kept the function in case a future detector needs the same
+            # migration path, but it is no longer OR'd into the result.
 
             for cls, (_p, accepted) in FILES.items():
                 if cls == "benign":

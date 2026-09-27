@@ -69,3 +69,17 @@ create_sih_presentation.py
 extract_pdf_text.py
 literature_review_extracted.txt
 *.bak
+
+# ── Large training corpora (fetch, don't commit) ──────────────────────
+# backend/data/dga_domains.csv  — DGArchive-derived + legit rows
+# backend/data/top-1m.csv       — Tranco top 1M (https://tranco-list.eu)
+# Both are required by scripts/train_dga.py. See data/DATASETS.md for sources.
+backend/data/dga_domains.csv
+backend/data/top-1m.csv
+*.csv.zip
+
+# Build / runtime artifacts
+__pycache__/
+.pytest_cache/
+.DS_Store
+data/pcaps/uploads/

@@ -1,69 +1,133 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { Alert, Metric, SystemStatus } from '../lib/types';
-import { generateAlert, fetchHealth, fetchMetrics, fetchThreats } from '../lib/api';
+import {
+  fetchHealth, fetchMetrics, fetchThreats,
+  type ThroughputTelemetry, fetchTelemetry,
+} from '../lib/api';
 
-const INIT: Metric = { flows_per_second:0, throughput_mbps:0, detection_latency_ms:12.93, active_threats:0, total_detections:0, chain_height:3680, uptime_seconds:0 };
+/**
+ * Single polling hook for live backend state.
+ *
+ * What changed and why: this hook used to run a 1-second `setInterval` that
+ * mutated flows_per_second, throughput_mbps and detection_latency_ms with
+ * Math.random() on every tick, and injected a synthetic alert with ~18%
+ * probability whenever the backend was unreachable. The dashboard therefore
+ * animated convincingly while connected to nothing. Every number below now
+ * comes from /api/v1/metrics/throughput, and when the backend is down the UI
+ * shows an error instead of inventing traffic.
+ */
+
+const INIT: Metric = {
+  flows_per_second: 0, throughput_mbps: 0, detection_latency_ms: 0,
+  active_threats: 0, total_detections: 0, chain_height: 0, uptime_seconds: 0,
+};
+
+const POLL_MS = 2000;
+
+/**
+ * Shared store: ONE poller for the whole app.
+ *
+ * Every component that called useLiveData() used to start its own 2 s
+ * setInterval, so Layout + the current page polled twice in parallel. With the
+ * extra /threats redirects that was ~480 req/min from one tab against a 120/min
+ * per-IP limit, which is what caused the periodic 429 blackouts. Now all
+ * callers subscribe to the same state; polling starts with the first
+ * subscriber and stops when the last one unmounts. The hook's return shape is
+ * unchanged, so no call site needed editing.
+ */
+type LiveState = {
+  metrics: Metric;
+  telemetry: ThroughputTelemetry | null;
+  alerts: Alert[];
+  paused: boolean;
+  status: SystemStatus;
+  backendUp: boolean;
+  detectionActive: boolean;
+  error: string | null;
+  loading: boolean;
+};
+
+let state: LiveState = {
+  metrics: INIT, telemetry: null, alerts: [], paused: false,
+  status: 'SIMULATION', backendUp: false, detectionActive: false,
+  error: null, loading: true,
+};
+
+const listeners = new Set<() => void>();
+let timer: ReturnType<typeof setInterval> | null = null;
+let inFlight = false;
+
+function setState(patch: Partial<LiveState>) {
+  state = { ...state, ...patch };
+  listeners.forEach(l => l());
+}
+
+async function poll() {
+  // Skip if paused or if the previous poll is still running (slow backend):
+  // overlapping polls are how request counts pile up.
+  if (state.paused || inFlight) return;
+  inFlight = true;
+  try {
+    const health = await fetchHealth();
+    if (!health.ok) {
+      setState({ backendUp: false, detectionActive: false,
+                 error: health.error || 'Backend unreachable', loading: false });
+      return;
+    }
+    const engineError = health.detection_active === false
+      // Engine down but API up: say so rather than showing an empty, healthy
+      // looking board. "No threats" and "no detector" must not look alike.
+      ? (health.degraded_reason || 'Detection engine unavailable')
+      : null;
+    try {
+      const t = await fetchTelemetry();
+      const [m, a] = await Promise.all([fetchMetrics(t), fetchThreats(40)]);
+      setState({
+        backendUp: true,
+        detectionActive: Boolean(health.detection_active),
+        error: engineError,
+        metrics: { ...state.metrics, ...m },
+        telemetry: t,
+        alerts: a,
+        status: (t.data_source as SystemStatus) || 'BACKEND_SEEDED',
+        loading: false,
+      });
+    } catch (e) {
+      setState({ backendUp: true, detectionActive: Boolean(health.detection_active),
+                 error: (e as Error).message, loading: false });
+    }
+  } finally {
+    inFlight = false;
+  }
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  if (listeners.size === 1 && timer === null) {
+    poll();
+    timer = setInterval(poll, POLL_MS);
+  }
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0 && timer !== null) {
+      clearInterval(timer);
+      timer = null;
+    }
+  };
+}
+
+const getSnapshot = () => state;
+
+const togglePause = () => setState({ paused: !state.paused });
+const refresh = () => poll();
 
 export function useLiveData() {
-  const [metrics, setMetrics] = useState<Metric>(INIT);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [paused, setPaused] = useState(false);
-  const [status, setStatus] = useState<SystemStatus>('SIMULATION');
-  const [backendUp, setBackendUp] = useState(false);
-  const pRef = useRef(paused);
-  useEffect(() => { pRef.current = paused; }, [paused]);
-  const liveRef = useRef(false);
-
-  useEffect(() => {
-    fetchHealth().then(r => {
-      setBackendUp(r.ok);
-      if (r.ok && r.status) setStatus(r.status as SystemStatus);
-    });
-  }, []);
-
-  // Prefer real backend alerts; fall back to the simulator only if it is down.
-  useEffect(() => {
-    let cancelled = false;
-    fetchThreats(40).then(real => {
-      if (cancelled) return;
-      if (real.length) { liveRef.current = true; setAlerts(real); }
-      else setAlerts(Array.from({length:20}, generateAlert));
-    }).catch(() => setAlerts(Array.from({length:20}, generateAlert)));
-    return () => { cancelled = true; };
-  }, []);
-
-  // Poll real metrics. Only the fields the backend cannot supply stay simulated.
-  useEffect(() => {
-    let cancelled = false;
-    const pull = () => {
-      if (pRef.current) return;
-      fetchMetrics().then(m => {
-        if (!cancelled && m) setMetrics(p => ({ ...p, ...m }));
-      });
-      if (liveRef.current) fetchThreats(40).then(r => { if (!cancelled && r.length) setAlerts(r); });
-    };
-    pull();
-    const iv = setInterval(pull, 5000);
-    return () => { cancelled = true; clearInterval(iv); };
-  }, []);
-
-  // tick
-  useEffect(() => {
-    const iv = setInterval(() => {
-      if (pRef.current) return;
-      setMetrics(p => ({
-        ...p,
-        flows_per_second: Math.max(60, Math.min(120, (p.flows_per_second||88) + (Math.random()-.48)*8)),
-        throughput_mbps: Math.max(2, Math.min(8, (p.throughput_mbps||5.2) + (Math.random()-.5)*.3)),
-        detection_latency_ms: 11 + Math.random()*4,
-        uptime_seconds: p.uptime_seconds + 1,
-        chain_height: p.chain_height + (Math.random()<.03?1:0),
-      }));
-      // Only synthesise alerts when there is no backend feeding us real ones.
-      if (!liveRef.current && Math.random()<.18) setAlerts(p=>[generateAlert(),...p].slice(0,60));
-    }, 1000);
-    return ()=>clearInterval(iv);
-  }, []);
-
-  return { metrics, alerts, paused, togglePause:useCallback(()=>setPaused(p=>!p),[]), backendUp, status };
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return {
+    metrics: s.metrics, telemetry: s.telemetry, alerts: s.alerts, paused: s.paused,
+    togglePause,
+    backendUp: s.backendUp, detectionActive: s.detectionActive,
+    status: s.status, error: s.error, loading: s.loading,
+    refresh,
+  };
 }

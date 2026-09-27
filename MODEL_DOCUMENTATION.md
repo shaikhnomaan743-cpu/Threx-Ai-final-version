@@ -48,11 +48,17 @@
   - `bigram_log_likelihood_3` — log-likelihood of trigrams under benign distribution
   - `digit_ratio` — fraction of digits in domain name (DGA domains often have high digit ratios)
   - `consonant_vowel_ratio` — ratio of consonants to vowels
-- **Training/validation approach**:
-  - Dataset: 1000 Tranco benign domains + 5000 DGArchive-derived synthetic malicious domains (entropy > 3.5, length 8–20)
-  - Train/test split: 80/20
-  - Metrics: `train_auc = 0.9991, test_auc = 1.0` (on synthetic derived hold-out)
-  - **Caveat**: test AUC = 1.0 on synthetic derived set; real DGA domains may vary. Replace with official DGArchive export for production retraining. See `data/DATASETS.md`.
+- **Training/validation approach** (`backend/cybersentinel-backend/scripts/train_dga.py`):
+  - Data: REAL corpora — Tranco top-1M (benign) + `dga_domains.csv`
+    (DGArchive-derived; families: CryptoLocker, GameOver Zeus, NewGOZ).
+  - 80/20 stratified split, seed 42. Held-out (28,517 domains): accuracy
+    97.06 %, precision 95.95 %, recall 96.10 %, F1 96.03 %, AUC 0.9966,
+    FPR 2.37 %. Reproduce: `scripts/evaluate_detectors.py` (Part A).
+  - Live path scores the registrable label (`www.x.co.uk` -> `x`), matching
+    training; scoring the full hostname measured 80.4 % accuracy / 25.8 % FPR.
+  - Caveats: only 3 DGA families (dictionary-word DGAs such as Matsnu /
+    Suppobox are not represented); `tld_length` equals label length for bare
+    labels, so length still reaches the "length-ablated" model.
 
 ---
 
@@ -107,6 +113,33 @@
 
 ---
 
+## 7. Slow-rate DoS (Slowloris) — rule-based, reports as `ddos`
+
+- Per flow: long TCP to a web port, tiny packets, trickle rate, steady (no
+  silence > 45 s). Cross flow: >= 8 such sockets open at once to one
+  destination:port (the connection-pool exhaustion signature).
+- Lab evaluation: tool-faithful Slowloris (150 concurrent sockets) 95.3 %
+  detected; idle HTTP keep-alive hard negative 0 % false positives.
+
+## Training data — what is real and what is not
+
+| detector | technique | training data |
+|---|---|---|
+| DGA | LightGBM | **real** public corpora (above) |
+| DDoS | IsolationForest + one-sided rate rule | synthetic Gaussian rates (`scripts/train_all.py`) |
+| Exfiltration | IsolationForest + rule | synthetic ranges (`scripts/train_all.py`) |
+| TLS malware | RandomForest | synthetic, non-overlapping ranges (`scripts/train_all.py`) |
+| C2 beacon, port scan, DNS tunnel, slow-rate DoS | statistical rules | no training |
+
+`train_ddos.py`, `train_exfil.py`, `train_tls.py` and `train_beacon.py` do not
+run (syntax errors); the shipped artifacts come from `train_all.py`. AUCs
+computed on those synthetic sets say little about real traffic and are not
+quoted. End-to-end lab results: `data/detector_evaluation.json`.
+
+Known limitation: the intra-flow branch of the C2 detector can never alert
+(it requires CV < 0.05 AND FFT periodicity > 0.3, but by Parseval the score is
+bounded by ~CV^2). C2 detection relies on the cross-flow checks.
+
 ## Dataset & Evaluation Summary
 
 | Detector | Training Data | Real or Synthetic | Evaluation on |
@@ -132,16 +165,8 @@
 ## Measured results (regenerate with the scripts below — do not hand-edit)
 
 ### Throughput and latency  — PS constraint (d)
-`PYTHONPATH=. python3 ../../scripts/measure_throughput.py`
-
-| run | flows/sec | p50 | p95 | p99 |
-|---|---|---|---|---|
-| sustained (serial) | 279.0 | 1.69 ms | 17.76 ms | 20.93 ms |
-| burst (no pacing) | 198.0 | 1.69 ms | 18.69 ms | 21.5 ms |
-
-180 flows from `lab_mixed.json`, zero drops. Throughput and latency are quoted
-from the *same* run — an earlier version of this script reported the best
-throughput from one configuration alongside the best latency from another.
+End-to-end multi-core benchmark: `scripts/benchmark_pipeline.py` (see README,
+"Throughput"). Record the laptop result from `data/benchmark_*.json`.
 
 ### DGA classifier — real corpora
 `PYTHONPATH=. python3 scripts/train_dga.py`

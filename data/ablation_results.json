@@ -1,5 +1,5 @@
 {
-  "measured_at": "2026-09-14T02:40:20Z",
+  "measured_at": "2026-09-17T15:53:38Z",
   "two_sided_features_removed": [
     "syn_to_ack_ratio",
     "amplification_ratio",
@@ -24,19 +24,19 @@
   "per_mode": {
     "bidirectional": {
       "ddos": {
-        "precision": 0.8889,
-        "recall": 0.8,
-        "f1": 0.8421,
-        "tp": 16,
-        "fp": 2,
-        "fn": 4
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 20,
+        "fp": 0,
+        "fn": 0
       },
       "c2_beacon": {
-        "precision": 0.3019,
+        "precision": 1.0,
         "recall": 0.8,
-        "f1": 0.4384,
+        "f1": 0.8889,
         "tp": 16,
-        "fp": 37,
+        "fp": 0,
         "fn": 4
       },
       "dga": {
@@ -82,19 +82,19 @@
     },
     "unidirectional": {
       "ddos": {
-        "precision": 0.8889,
-        "recall": 0.8,
-        "f1": 0.8421,
-        "tp": 16,
-        "fp": 2,
-        "fn": 4
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 20,
+        "fp": 0,
+        "fn": 0
       },
       "c2_beacon": {
-        "precision": 0.3019,
+        "precision": 1.0,
         "recall": 0.8,
-        "f1": 0.4384,
+        "f1": 0.8889,
         "tp": 16,
-        "fp": 37,
+        "fp": 0,
         "fn": 4
       },
       "dga": {
@@ -140,19 +140,19 @@
     },
     "recovered": {
       "ddos": {
-        "precision": 0.9091,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.9524,
+        "f1": 1.0,
         "tp": 20,
-        "fp": 2,
+        "fp": 0,
         "fn": 0
       },
       "c2_beacon": {
-        "precision": 0.3019,
+        "precision": 1.0,
         "recall": 0.8,
-        "f1": 0.4384,
+        "f1": 0.8889,
         "tp": 16,
-        "fp": 37,
+        "fp": 0,
         "fn": 4
       },
       "dga": {
@@ -200,17 +200,17 @@
   "chart": [
     {
       "threat_class": "ddos",
-      "bidirectional_f1": 0.8421,
-      "unidirectional_f1": 0.8421,
-      "recovered_f1": 0.9524,
+      "bidirectional_f1": 1.0,
+      "unidirectional_f1": 1.0,
+      "recovered_f1": 1.0,
       "cost_of_one_way": 0.0,
-      "regained_by_substitutes": 0.1103
+      "regained_by_substitutes": 0.0
     },
     {
       "threat_class": "c2_beacon",
-      "bidirectional_f1": 0.4384,
-      "unidirectional_f1": 0.4384,
-      "recovered_f1": 0.4384,
+      "bidirectional_f1": 0.8889,
+      "unidirectional_f1": 0.8889,
+      "recovered_f1": 0.8889,
       "cost_of_one_way": 0.0,
       "regained_by_substitutes": 0.0
     },

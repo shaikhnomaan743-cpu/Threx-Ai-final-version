@@ -1,0 +1,238 @@
+{
+  "generated_by": "scripts/evaluate_detectors.py",
+  "generated_at": "2026-09-23T19:31:08+00:00",
+  "dga_real_data": {
+    "data": "REAL: Tranco top-1m + dga_domains.csv (DGArchive-derived)",
+    "corpus": {
+      "benign": 89917,
+      "dga": 52665,
+      "dga_families": [
+        "cryptolocker",
+        "goz",
+        "newgoz"
+      ]
+    },
+    "split": "80/20 stratified, seed 42 (identical to scripts/train_dga.py)",
+    "held_out_bare_labels": {
+      "n": 28517,
+      "accuracy": 0.9705,
+      "precision": 0.9592,
+      "recall": 0.961,
+      "f1": 0.9601,
+      "fpr": 0.024,
+      "tn": 17553,
+      "fp": 431,
+      "fn": 411,
+      "tp": 10122,
+      "auc": 0.9966
+    },
+    "held_out_real_hostnames_live_path": {
+      "n": 28517,
+      "accuracy": 0.9706,
+      "precision": 0.9595,
+      "recall": 0.961,
+      "f1": 0.9603,
+      "fpr": 0.0237,
+      "tn": 17557,
+      "fp": 427,
+      "fn": 411,
+      "tp": 10122,
+      "auc": 0.9966
+    },
+    "held_out_real_hostnames_if_fqdn_scored_directly": {
+      "n": 28517,
+      "accuracy": 0.8035,
+      "precision": 0.6737,
+      "recall": 0.9074,
+      "f1": 0.7733,
+      "fpr": 0.2575,
+      "tn": 13354,
+      "fp": 4630,
+      "fn": 975,
+      "tp": 9558,
+      "auc": 0.9351
+    },
+    "caveats": [
+      "Only 3 DGA families in the corpus; dictionary-word DGAs (e.g. Matsnu, Suppobox) are not represented, so generalisation to them is unproven.",
+      "tld_length equals label length for bare labels, so domain length still reaches the 'length-ablated' model through tld_length."
+    ]
+  },
+  "pipeline_lab_traffic": {
+    "data": "SYNTHETIC lab traffic from scripts/generate_lab_traffic.py (not a public benchmark)",
+    "seeds": [
+      2026,
+      2027,
+      2028
+    ],
+    "flows_per_seed": 2750,
+    "order": "time-ordered stream through InferenceEngine.analyze_flow (all 7 detectors)",
+    "per_class": {
+      "ddos": {
+        "n_per_seed": 200,
+        "detection_rate": {
+          "mean": 0.9917,
+          "min": 0.99,
+          "max": 0.995
+        },
+        "any_alert_rate": {
+          "mean": 0.9917,
+          "min": 0.99,
+          "max": 0.995
+        }
+      },
+      "slowloris": {
+        "n_per_seed": 100,
+        "detection_rate": {
+          "mean": 0.02,
+          "min": 0.01,
+          "max": 0.03
+        },
+        "any_alert_rate": {
+          "mean": 0.02,
+          "min": 0.01,
+          "max": 0.03
+        }
+      },
+      "slowloris_tool": {
+        "n_per_seed": 150,
+        "detection_rate": {
+          "mean": 0.9533,
+          "min": 0.9533,
+          "max": 0.9533
+        },
+        "any_alert_rate": {
+          "mean": 0.9533,
+          "min": 0.9533,
+          "max": 0.9533
+        }
+      },
+      "dns_tunnel": {
+        "n_per_seed": 150,
+        "detection_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "any_alert_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "dga": {
+        "n_per_seed": 300,
+        "detection_rate": {
+          "mean": 0.42,
+          "min": 0.38,
+          "max": 0.48
+        },
+        "any_alert_rate": {
+          "mean": 0.4244,
+          "min": 0.3833,
+          "max": 0.4867
+        }
+      },
+      "c2_beacon": {
+        "n_per_seed": 200,
+        "detection_rate": {
+          "mean": 0.745,
+          "min": 0.34,
+          "max": 0.98
+        },
+        "any_alert_rate": {
+          "mean": 0.745,
+          "min": 0.34,
+          "max": 0.98
+        }
+      },
+      "port_scan": {
+        "n_per_seed": 100,
+        "detection_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "any_alert_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "tls_malware": {
+        "n_per_seed": 150,
+        "detection_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "any_alert_rate": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      "exfiltration": {
+        "n_per_seed": 100,
+        "detection_rate": {
+          "mean": 0.99,
+          "min": 0.99,
+          "max": 0.99
+        },
+        "any_alert_rate": {
+          "mean": 0.99,
+          "min": 0.99,
+          "max": 0.99
+        }
+      }
+    },
+    "benign_false_positive_rate": {
+      "mean": 0.0174,
+      "min": 0.0115,
+      "max": 0.0208
+    },
+    "false_positive_rate_by_benign_type": {
+      "benign": {
+        "mean": 0.0227,
+        "min": 0.015,
+        "max": 0.027
+      },
+      "benign_keepalive": {
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "binary_attack_vs_benign": {
+      "accuracy": {
+        "mean": 0.8713,
+        "min": 0.852,
+        "max": 0.8844
+      },
+      "precision": {
+        "mean": 0.9803,
+        "min": 0.9772,
+        "max": 0.986
+      },
+      "recall": {
+        "mean": 0.7715,
+        "min": 0.7297,
+        "max": 0.7993
+      },
+      "f1": {
+        "mean": 0.8631,
+        "min": 0.8387,
+        "max": 0.8794
+      },
+      "fpr": {
+        "mean": 0.0174,
+        "min": 0.0115,
+        "max": 0.0208
+      }
+    },
+    "caveats": [
+      "Generator and detectors were written by the same team; high rates show the pipeline works end-to-end, not real-world accuracy.",
+      "Lab benign traffic has no DNS, so DGA false positives are measured in Part A only.",
+      "Generator draws a random source per C2 beacon, which weakens per-host periodicity."
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+==========================================================================================
+GROUP id=26 top=73.20 left=572.16 w=348.50 h=94.35 chOff=<CT_Point2D '<a:chOff>' at 0x1d0778b7f20> chExt=<CT_PositiveSize2D '<a:chExt>' at 0x1d0778b7f20>
+   child id=27 type=FREEFORM (5) top=73.56 left=572.52 w=347.80 h=93.60
+        prstGeom=<none> 'NoneType' object has no attribute 'get'
+   child id=28 type=FREEFORM (5) top=73.56 left=572.52 w=347.80 h=93.60
+        prstGeom=<none> 'NoneType' object has no attribute 'get'
+        line w=None
+==========================================================================================
+GROUP id=32 top=175.44 left=572.16 w=348.50 h=143.30 chOff=<CT_Point2D '<a:chOff>' at 0x1d0778b6ad0> chExt=<CT_PositiveSize2D '<a:chExt>' at 0x1d0778b6ad0>
+   child id=33 type=FREEFORM (5) top=175.80 left=572.52 w=347.80 h=142.60
+        prstGeom=<none> 'NoneType' object has no attribute 'get'
+   child id=34 type=FREEFORM (5) top=175.80 left=572.52 w=347.80 h=142.60
+        prstGeom=<none> 'NoneType' object has no attribute 'get'
+        line w=None
+==========================================================================================
+id=35 name=object 35 top=184.98 left=587.38 w=156.60 h=17.60 bottom=202.58
+   P0 sz=13.0 spcB=0.95 lines=1 chars=27
+        All five PS constraints met
+   --> predicted height 16.81pt, text bottom y=201.79
+==========================================================================================
+id=36 name=object 36 top=235.76 left=608.98 w=138.60 h=14.10 bottom=249.86
+   P0 sz=10.0 spcB=1.05 lines=1 chars=31
+        (b) No decryption metadata only
+   --> predicted height 13.25pt, text bottom y=249.01
+==========================================================================================
+id=37 name=object 37 top=214.48 left=588.82 w=198.65 h=100.80 bottom=315.28
+   P0 sz=11.0 spcB=1.10 lines=1 chars=42
+        (a) Read-only ingest no send() path exists
+   P1 sz=11.0 spcB=8.60 lines=1 chars=1
+        ✓
+   P2 sz=11.0 spcB=9.40 lines=1 chars=39
+        (c) Streaming p50 1.54 ms while serving
+   P3 sz=11.0 spcB=9.65 lines=2 chars=55
+        (d) Measured 13,394/s, 1 core — 120k/s target, unproven
+   P4 sz=11.0 spcB=8.60 lines=1 chars=1
+        ✓
+   --> predicted height 117.87pt, text bottom y=332.35
+==========================================================================================
+id=38 name=object 38 top=300.58 left=608.98 w=161.80 h=14.10 bottom=314.68
+   P0 sz=10.0 spcB=1.05 lines=1 chars=41
+        (e) Alert schema 17 fields incl. severity
+   --> predicted height 13.25pt, text bottom y=313.83
+==========================================================================================
+id=40 name=object 40 top=348.48 left=572.40 w=168.48 h=87.84 bottom=436.32
+==========================================================================================
+id=41 name=object 41 top=348.48 left=751.68 w=168.48 h=87.84 bottom=436.32

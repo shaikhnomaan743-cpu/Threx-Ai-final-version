@@ -1,0 +1,766 @@
+====================================================================================================
+FILE: C:\Users\shaik\Downloads\THREX_SIH26145_work.pptx  slides=6  13.33x7.50in
+====================================================================================================
+
+##### SLIDE 1 #####
+ [group object 2]
+   object 3: <FREEFORM (5)>
+   object 4: <PICTURE (13)>
+   object 5: <PICTURE (13)>
+ object 6: SMART INDIA HACKATHON 2026
+ object 7: Problem Statement ID- SIH26145 | Problem Statement Title- Al-Based Detection of | Cyber Threats in Unidirectional IP Traffic | Theme- Blockchain & Cybersecurity | PS Category- Software | Team ID- | Team Name- Caffeinated Coders
+
+##### SLIDE 2 #####
+ object 2: Proposed Solution
+ object 3: <PICTURE (13)>
+ object 4: A passive detection pipeline for one-way links. It never probes, never completes a handshake, and has no send() path back into the production network. | DE T E CTION PI PEL INE
+ [group object 5]
+   object 6: <FREEFORM (5)>
+   object 7: <FREEFORM (5)>
+ object 8: Mirror / TAP | one-way copy
+ object 9: ▶
+ [group object 10]
+   object 11: <FREEFORM (5)>
+   object 12: <FREEFORM (5)>
+ object 13: Data Diode | no return path
+ object 14: ▶
+ [group object 15]
+   object 16: <FREEFORM (5)>
+   object 17: <FREEFORM (5)>
+ object 18: Feature Engine | rate · entropy · periodicity
+ object 19: ▶
+ [group object 20]
+   object 21: <FREEFORM (5)>
+   object 22: <FREEFORM (5)>
+ object 23: Six Detectors | parallel inference
+ object 24: ▶
+ [group object 25]
+   object 26: <FREEFORM (5)>
+   object 27: <FREEFORM (5)>
+ object 28: Alert + Evidence | 17-field record
+ object 29: <FREEFORM (5)>
+ object 30: (a) DDoS
+ object 31: <FREEFORM (5)>
+ object 32: (b) C2 Beacon
+ object 33: <FREEFORM (5)>
+ object 34: (c) DGA / DNS
+ object 35: <FREEFORM (5)>
+ object 36: (d) TLS Malware
+ object 37: <FREEFORM (5)>
+ object 38: (e) Recon
+ object 39: <FREEFORM (5)>
+ object 40: (f) Exfiltration
+ [group object 41]
+   object 42: <FREEFORM (5)>
+   object 43: <FREEFORM (5)>
+ object 44: How it reads the link
+ object 45: •
+ object 46: Metadata only. No payload is decrypted at any point. | JA3 from the ClientHello, which crosses the link in the clear.
+ object 47: Nothing inline, so the sensor adds no attack surface.
+ [group object 48]
+   object 49: <FREEFORM (5)>
+   object 50: <FREEFORM (5)>
+ object 51: What an analyst gets
+ object 52: 17-field alert: 5-tuple, class, severity, confidence. | 3-6 evidence features, each with its weight. | Live WebSocket feed, not an end-of-shift report.
+ [group object 53]
+   object 54: <FREEFORM (5)>
+   object 55: <FREEFORM (5)>
+ object 56: Innovation and uniqueness
+ object 57: •
+ object 58: Six narrow detectors, not one model. Each alert names a behaviour. | 20 papers, 2024-26. Every one assumes a return path.
+ object 59: Built for the constraint, not adapted to it.
+ [group object 60]
+   object 61: <FREEFORM (5)>
+   object 62: <FREEFORM (5)>
+ object 63: Measured. Detection 13,394 flows/sec on one core (was 2,800; ~7×), identical to baseline on every class via a regression gate. 120,000 flows/sec is a target — hardware validation in progress, not a completed benchmark.
+ object 64: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 3 #####
+ object 2: Technical Approach
+ object 3: <PICTURE (13)>
+ object 4: Six detectors, one per PS threat category (a)-(f). Each reads only features a one-way tap can actually see.
+ object 5: <TABLE (19)>
+ object 6: Technologies used
+ object 8: Methodology
+ object 7: Languages  Python 3.11, TypeScript | Backend  FastAPI, asyncio, Uvicorn, WebSocket | Capture  dep-free PCAP parser (~270k pkt/s, ~50× vs scapy ~5.3k); NetFlow v5/v9/IPFIX ingest matching lab JSON (replay ≡ live). Scapy fallback. | ML  scikit-learn, LightGBM, NumPy, SciPy (FFT) | Frontend  React 19, Vite, Recharts | Data  PostgreSQL, Redis, SQLite fallback | Deploy  Docker Compose, Nginx, Prometheus /health | Hardware  Commodity x86 server. No appliance, no GPU.
+ object 9: •
+ object 10: Ingest → flow assembly → feature extraction → batched inference → scoring → alert. NetFlow v5/v9/IPFIX records are decoded to the same JSON schema as lab replay, so both paths are processed identically. | PCAP path is now a dependency-free parser (~270,000 packets/sec vs scapy ~5,300). Async queue: capture never blocks on inference. Backpressure on replay, drop-counting on a live tap. | Deterministic: seed 42, same corpus gives the same numbers on any machine.
+ [group object 11]
+   object 12: <FREEFORM (5)>
+   object 13: <FREEFORM (5)>
+ object 14: What a one-way tap costs us
+ object 15: JA3S needs the ServerHello, which we cannot see, so we do not use it. syn_ack_ratio and byte_ratio_outbound were removed for the same reason and replaced with one-sided substitutes. | DDoS, exfiltration and TLS-malware models are trained on synthetic data, not captured attack traffic.
+ object 16: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 4 #####
+ object 2: Feasibility and Viability
+ object 3: <PICTURE (13)>
+ object 4: R I S K S, AND WHAT WE DO ABOUT E ACH
+ [group object 5]
+   object 6: <FREEFORM (5)>
+   object 7: <FREEFORM (5)>
+ object 8: Risk 1. Real diode traffic needs clearance we do not have
+ object 9: Mitigation. We build on the sources the statement itself names: hping3, Slowloris, dnscat2/iodine, DGArchive,  Tranco. The alert schema matches NetFlow/IPFIX, so a cleared operator can point the sensor at live telemetry without code changes.
+ [group object 26]
+   object 27: <FREEFORM (5)>
+   object 28: <FREEFORM (5)>
+ object 29: Feasibility: it already runs
+ object 30: •
+ object 31: Prototype deployed: live SOC dashboard, WebSocket feed, report generator. Software-only on commodity servers; modular detectors. | Detection 2,800 → 13,394 flows/sec on one core (~7×; batched LightGBM, incremental fan-out, bounded state). Regression gate: identical to baseline on every class. | Multi-core pipeline built (receiver → N workers → dst aggregators). 120,000 flows/sec is a target, hardware validation in progress — not measured.
+ [group object 10]
+   object 11: <FREEFORM (5)>
+   object 12: <FREEFORM (5)>
+ object 13: Risk 2. C2 beacon precision is 0.30, our weakest number
+ object 14: Mitigation. Scoring periodicity without destination context made NTP and ordinary telemetry look like beacons. Fan-in is now gated. Still the first thing we would fix with more time.
+ [group object 15]
+   object 16: <FREEFORM (5)>
+   object 17: <FREEFORM (5)>
+ object 18: Risk 3. Accuracy drifts as traffic patterns change
+ [group object 32]
+   object 33: <FREEFORM (5)>
+   object 34: <FREEFORM (5)>
+ object 35: All five PS constraints met
+ object 36: (b) No decryption metadata only
+ object 37: (a) Read-only ingest no send() path exists | ✓ | (c) Streaming p50 1.54 ms while serving | (d) Measured 13,394/s, 1 core — 120k/s target, unproven | ✓
+ object 38: (e) Alert schema 17 fields incl. severity
+ object 39: R UNNI NG T ODAY
+ object 19: Mitigation. Detectors are independent, so one can be retrained in isolation. Every metric ships beside a naive | baseline, so a silently broken model is visible rather than flattering.
+ [group object 20]
+   object 21: <FREEFORM (5)>
+   object 22: <FREEFORM (5)>
+ object 23: Weaknesses we found ourselves, and fixed
+ object 40: <PICTURE (13)>
+ object 41: <PICTURE (13)>
+ object 24: •
+ object 25: DGA scored AUC 1.00 on our first corpus — domain length alone separated the classes. Rebuilt on 142,582 real domains, dropped length: CV AUC 0.9966. DDoS fired on every SYN burst; moved to flow rate plus source-IP entropy. | Three correctness bugs, all fixed: alerts not reliably persisted under load (single WAL connection, batched writes, 20k alerts/sec+); live capture re-enqueued every active flow on every packet (now FIN/RST or timeout); DNS-over-UDP never parsed, so PCAP uploads could not trigger DGA or DNS-tunnel — JA3 was a placeholder, now computed. | Our own multi-core regression: naive source-IP sharding dropped C2 to 0% because lab beacons randomise source IP — destination-side aggregation restored full parity. DDoS / exfil / TLS models remain trained on synthetic data, not captured attacks.
+ object 42: Not built yet: JA4 fingerprints, QUIC — named in the PS, still roadmap only. | Some dashboard constraint / diode status labels are static, not live checks. 120,000 flows/sec: target, hardware validation in progress.
+ object 43: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 5 #####
+ object 2: Impact and Benefits
+ object 3: <PICTURE (13)>
+ [group object 4]
+   object 5: <FREEFORM (5)>
+   object 6: <FREEFORM (5)>
+ object 7: 0 of 6	→	6 of 6
+ object 8: PS threat classes detectable on a unidirectional link | Working: Suricata, Zeek and commercial NDR each require the return path, so on a diode link their coverage is 0 of 6 today. THREX covers all six, and our own ablation shows removing the return direction costs 0.000 F1 once one-sided substitute features are used.
+ object 9: <TABLE (19)>
+ [group object 10]
+   object 11: <FREEFORM (5)>
+   object 12: <FREEFORM (5)>
+ object 13: 13,394 | flows / sec | 1-core detection · was 2,800
+ [group object 14]
+   object 15: <FREEFORM (5)>
+   object 16: <FREEFORM (5)>
+ object 17: 1.54 | ms p50 latency | while serving live
+ [group object 18]
+   object 19: <FREEFORM (5)>
+   object 20: <FREEFORM (5)>
+ object 21: 0.9966 | DGA CV AUC | baseline 0.9384
+ [group object 22]
+   object 23: <FREEFORM (5)>
+   object 24: <FREEFORM (5)>
+ object 25: 0 | dropped flows | measured, not assumed
+ [group object 26]
+   object 27: <FREEFORM (5)>
+   object 28: <FREEFORM (5)>
+ object 29: Benefits
+ object 30: Economic. Open-source ML stack on commodity servers. No appliance, no per-seat licence, versus high-licence commercial NDR. | Operational. Six threat classes from one passive sensor; analysts triage from evidence, not a bare score.
+ [group object 31]
+   object 32: <FREEFORM (5)>
+   object 33: <FREEFORM (5)>
+ object 34: Reproducible | Every figure regenerates from scripts/regenerate_evaluation.py. Seed 42 throughout.
+ object 35: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 6 #####
+ object 2: Research and References
+ object 3: <PICTURE (13)>
+ object 4: 20 papers reviewed (2024-26). Five of six research dimensions are well served. The sixth, the unidirectional diode link, is the one NTRO actually operates in.
+ object 5: Data sources we actually use
+ object 17: R E PRESENTATIVE PAPE RS
+ object 6: DGArchive  dgarchive.caad.fkie.fraunhofer.de — 52,665 DGA domains | Tranco top-1M  tranco-list.eu — 89,917 benign domains | hping3 / Slowloris  SYN and UDP floods, slow HTTP exhaustion | dnscat2 / iodine  DNS tunnelling captures | iperf3 / Ostinato  benign background load | CIC-IDS, CTU-13, TON_IoT  cross-checked; all bidirectional, hence our own ablation | Ingest (new)  NetFlow v5/v9/IPFIX now decoded to the lab JSON schema (replay and live records processed identically). Dependency-free PCAP parser ~270,000 pkt/s vs scapy ~5,300 (~50×).
+ [group object 18]
+   object 19: <FREEFORM (5)>
+   object 20: <FREEFORM (5)>
+ object 21: Luay et al., 2026
+ object 22: IEEE Access
+ object 23: Temporal NetFlow features lift macro-F1 by up to 27%.
+ object 24: Gap. Benchmark only, never a one-way link.
+ [group object 7]
+   object 8: <FREEFORM (5)>
+   object 9: <FREEFORM (5)>
+ object 10: Access we do not have
+ object 11: Real NTRO diode traffic requires clearance. We use the lab and synthetic sources the statement itself names, and match the | NetFlow/IPFIX schema so a cleared operator can point the sensor at live telemetry without code changes.
+ [group object 25]
+   object 26: <FREEFORM (5)>
+   object 27: <FREEFORM (5)>
+ object 28: Fu et al., 2024
+ object 29: IEEE/ACM ToN
+ object 30: Flow-interaction graphs catch unknown encrypted malware.
+ object 31: Gap. Assumes bidirectional flow pairs.
+ [group object 12]
+   object 13: <FREEFORM (5)>
+   object 14: <FREEFORM (5)>
+ object 15: We measured the gap, not just claimed it
+ [group object 32]
+   object 33: <FREEFORM (5)>
+   object 34: <FREEFORM (5)>
+ object 35: Benka et al., 2025
+ object 36: IEEE Access
+ object 37: ML anomaly detection on real ICS TCP/IP captures.
+ object 16: Every dataset in those 20 papers is bidirectional. Nobody measures what a diode costs. | So we stripped the return direction across 170 labelled flows and scored the same traffic both ways. | One-sided substitute features then raised DDoS F1 by 0.110. Harness: scripts/run_ablation.py.
+ object 38: Gap. Inspects payload, not unidirectional.
+ object 39: Full 20-paper review with DOIs and per-paper gap analysis attached as annexure. | Standards referenced: RFC 3954 (NetFlow v9), RFC 7011 (IPFIX), JA3 fingerprinting spec.
+ object 40: SIH26145 · NTRO · Caffeinated Coders
+====================================================================================================
+FILE: C:\Users\shaik\Downloads\THREX_SIH26145_updated.pptx  slides=6  13.33x7.50in
+====================================================================================================
+
+##### SLIDE 1 #####
+ [group object 2]
+   object 3: <FREEFORM (5)>
+   object 4: <PICTURE (13)>
+   object 5: <PICTURE (13)>
+ object 6: SMART INDIA HACKATHON 2026
+ object 7: Problem Statement ID- SIH26145 | Problem Statement Title- Al-Based Detection of | Cyber Threats in Unidirectional IP Traffic | Theme- Blockchain & Cybersecurity | PS Category- Software | Team ID- | Team Name- Caffeinated Coders
+
+##### SLIDE 2 #####
+ object 2: Proposed Solution
+ object 3: <PICTURE (13)>
+ object 4: A passive detection pipeline for one-way links. It never probes, never completes a handshake, and has no send() path back into the production network. | DE T E CTION PI PEL INE
+ [group object 5]
+   object 6: <FREEFORM (5)>
+   object 7: <FREEFORM (5)>
+ object 8: Mirror / TAP | one-way copy
+ object 9: ▶
+ [group object 10]
+   object 11: <FREEFORM (5)>
+   object 12: <FREEFORM (5)>
+ object 13: Data Diode | no return path
+ object 14: ▶
+ [group object 15]
+   object 16: <FREEFORM (5)>
+   object 17: <FREEFORM (5)>
+ object 18: Feature Engine | rate · entropy · periodicity
+ object 19: ▶
+ [group object 20]
+   object 21: <FREEFORM (5)>
+   object 22: <FREEFORM (5)>
+ object 23: Six Detectors | parallel inference
+ object 24: ▶
+ [group object 25]
+   object 26: <FREEFORM (5)>
+   object 27: <FREEFORM (5)>
+ object 28: Alert + Evidence | 17-field record
+ object 29: <FREEFORM (5)>
+ object 30: (a) DDoS
+ object 31: <FREEFORM (5)>
+ object 32: (b) C2 Beacon
+ object 33: <FREEFORM (5)>
+ object 34: (c) DGA / DNS
+ object 35: <FREEFORM (5)>
+ object 36: (d) TLS Malware
+ object 37: <FREEFORM (5)>
+ object 38: (e) Recon
+ object 39: <FREEFORM (5)>
+ object 40: (f) Exfiltration
+ [group object 41]
+   object 42: <FREEFORM (5)>
+   object 43: <FREEFORM (5)>
+ object 44: How it reads the link
+ object 45: •
+ object 46: Metadata only. No payload is decrypted at any point. | JA3 from the ClientHello, which crosses the link in the clear.
+ object 47: Nothing inline, so the sensor adds no attack surface.
+ [group object 48]
+   object 49: <FREEFORM (5)>
+   object 50: <FREEFORM (5)>
+ object 51: What an analyst gets
+ object 52: 17-field alert: 5-tuple, class, severity, confidence. | 3-6 evidence features, each with its weight. | Live WebSocket feed, not an end-of-shift report.
+ [group object 53]
+   object 54: <FREEFORM (5)>
+   object 55: <FREEFORM (5)>
+ object 56: Innovation and uniqueness
+ object 57: •
+ object 58: Six narrow detectors, not one model. Each alert names a behaviour. | 20 papers, 2024-26. Every one assumes a return path.
+ object 59: Built for the constraint, not adapted to it.
+ [group object 60]
+   object 61: <FREEFORM (5)>
+   object 62: <FREEFORM (5)>
+ object 63: Detection hardening measured. Single-core detection rate improved 2,800 → 13,394 flows/sec (~7×) through exactness-preserving optimization: batched LightGBM scoring, incremental fan-out tracking, bounded state.  | Regression gate: identical outputs to baseline on every detection class. 120,000 flows/sec is a target only; hardware validation in progress.
+ object 64: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 3 #####
+ object 2: Technical Approach
+ object 3: <PICTURE (13)>
+ object 4: Six detectors, one per PS threat category (a)-(f). Each reads only features a one-way tap can actually see.
+ object 5: <TABLE (19)>
+ object 6: Technologies used
+ object 8: Methodology
+ object 7: Languages  Python 3.11, TypeScript | Backend  FastAPI, asyncio, Uvicorn, WebSocket | Capture  dependency-free PCAP parser; NetFlow v5/v9/IPFIX ingest | ML  scikit-learn, LightGBM, NumPy, SciPy (FFT) | Frontend  React 19, Vite, Recharts | Data  PostgreSQL, Redis, SQLite fallback | Deploy  Docker Compose, Nginx, Prometheus /health | Hardware  Commodity x86 server. No appliance, no GPU.
+ object 9: <TEXT_BOX (17)>
+ object 10: Ingest → flow assembly → feature extraction → batched inference → scoring → alert. | Async queue: capture never blocks on inference. Backpressure on replay, drop-counting on a live tap. | Ingest parity: NetFlow v5/v9/IPFIX matches the lab JSON schema, so replay and live flow records follow the same path. | PCAP hardening: dependency-free parser ≈50× faster than the prior Scapy path: 5,300 → ≈270,000 packets/sec.
+ [group object 11]
+   object 12: <FREEFORM (5)>
+   object 13: <FREEFORM (5)>
+ object 14: What a one-way tap costs us
+ object 15: JA3S needs the ServerHello, which we cannot see, so we do not use it. syn_ack_ratio and byte_ratio_outbound were removed for the same reason and replaced with one-sided substitutes. | Training note: DDoS, exfiltration and TLS-malware models remain trained on synthetic data; do not read the lab replay sources as captured attack-training data.
+ object 16: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 4 #####
+ object 2: Feasibility and Viability
+ object 3: <PICTURE (13)>
+ object 4: R I S K S, AND WHAT WE DO ABOUT E ACH
+ [group object 5]
+   object 6: <FREEFORM (5)>
+   object 7: <FREEFORM (5)>
+ object 8: Risk 1. Real diode traffic needs clearance we do not have
+ object 9: Mitigation. We build on the sources the statement itself names: hping3, Slowloris, dnscat2/iodine, DGArchive,  Tranco. The alert schema matches NetFlow/IPFIX, so a cleared operator can point the sensor at live telemetry without code changes.
+ [group object 26]
+   object 27: <FREEFORM (5)>
+   object 28: <FREEFORM (5)>
+ object 29: Feasibility: it already runs
+ object 30: •
+ object 31: • Prototype deployed: live SOC dashboard, WebSocket feed, report generator. | • Flow ingest now includes: NetFlow v5/v9/IPFIX matching the lab JSON schema; replay and live flow records use the same path. | • Capture hardening: DNS-over-UDP is parsed in PCAP uploads and JA3 is computed from ClientHello rather than a placeholder.
+ [group object 10]
+   object 11: <FREEFORM (5)>
+   object 12: <FREEFORM (5)>
+ object 13: Risk 2. C2 beacon precision is 0.30, our weakest number
+ object 14: Mitigation. Scoring periodicity without destination context made NTP and ordinary telemetry look like beacons. Fan-in is now gated. Still the first thing we would fix with more time.
+ [group object 15]
+   object 16: <FREEFORM (5)>
+   object 17: <FREEFORM (5)>
+ object 18: Risk 3. Accuracy / scaling can regress
+ [group object 32]
+   object 33: <FREEFORM (5)>
+   object 34: <FREEFORM (5)>
+ object 35: PS constraints & validation status
+ object 36: <TEXT_BOX (17)>
+ object 37: Read-only ingest — no send() path. | Metadata only — no decryption. | Detection rate — 13,394 flows/sec on one core after hardening. | Multi-core — receiver/splitter → N workers → destination aggregators. | Target — 120,000 flows/sec; hardware validation in progress, not yet measured. | Alert schema — 17 fields incl. severity.
+ object 38: <TEXT_BOX (17)>
+ object 39: R UNNI NG T ODAY
+ object 19: Mitigation. Detectors are independently retrainable; a regression gate compares outputs with the baseline. DDoS, exfiltration and TLS-malware models still use synthetic training data.
+ [group object 20]
+   object 21: <FREEFORM (5)>
+   object 22: <FREEFORM (5)>
+ object 23: Hardening: weaknesses found and fixed
+ object 40: <PICTURE (13)>
+ object 41: <PICTURE (13)>
+ object 24: <TEXT_BOX (17)>
+ object 25: • Correctness bugs: alert persistence under load, per-packet flow re-enqueue, and missing DNS-over-UDP PCAP parsing were fixed; single WAL + batched writes reached 20k alerts/sec+, flow export now occurs on FIN/RST or timeout, and JA3 uses real computation. | • ≈7× detection gain: 2,800 → 13,394 flows/sec on one core via batched LightGBM scoring, incremental fan-out tracking and bounded state; regression gate matched the baseline on every detection class. | • Scaling exposed a regression: naive source-IP sharding drove C2 detection to 0% because lab beacons randomize source IPs; destination-side aggregation restored full detection parity.
+ object 42: Roadmap: JA4 fingerprints and QUIC. | Still unverified: 120,000 flows/sec is a target; hardware validation is in progress. Some running-system status labels remain static rather than live architecture checks.
+ object 43: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 5 #####
+ object 2: Impact and Benefits
+ object 3: <PICTURE (13)>
+ [group object 4]
+   object 5: <FREEFORM (5)>
+   object 6: <FREEFORM (5)>
+ object 7: 0 of 6	→	6 of 6
+ object 8: PS threat classes detectable on a unidirectional link | Working: Suricata, Zeek and commercial NDR each require the return path, so on a diode link their coverage is 0 of 6 today. THREX covers all six, and our own ablation shows removing the return direction costs 0.000 F1 once one-sided substitute features are used.
+ object 9: <TABLE (19)>
+ [group object 10]
+   object 11: <FREEFORM (5)>
+   object 12: <FREEFORM (5)>
+ object 13: 13,394 | detection flows / sec | single core · ~7× vs 2,800
+ [group object 14]
+   object 15: <FREEFORM (5)>
+   object 16: <FREEFORM (5)>
+ object 17: 1.54 | ms p50 latency | while serving live
+ [group object 18]
+   object 19: <FREEFORM (5)>
+   object 20: <FREEFORM (5)>
+ object 21: 0.9966 | DGA CV AUC | baseline 0.9384
+ [group object 22]
+   object 23: <FREEFORM (5)>
+   object 24: <FREEFORM (5)>
+ object 25: 0 | dropped flows | measured, not assumed
+ [group object 26]
+   object 27: <FREEFORM (5)>
+   object 28: <FREEFORM (5)>
+ object 29: Benefits
+ object 30: Economic. Open-source ML stack on commodity servers. No appliance, no per-seat licence, versus high-licence commercial NDR. | Operational. Six threat classes from one passive sensor; analysts triage from evidence, not a bare score.
+ [group object 31]
+   object 32: <FREEFORM (5)>
+   object 33: <FREEFORM (5)>
+ object 34: Reproducible | Every figure regenerates from scripts/regenerate_evaluation.py. Seed 42 throughout.
+ object 35: SIH26145 · NTRO · Caffeinated Coders
+
+##### SLIDE 6 #####
+ object 2: Research and References
+ object 3: <PICTURE (13)>
+ object 4: 20 papers reviewed (2024-26). Five of six research dimensions are well served. The sixth, the unidirectional diode link, is the one NTRO actually operates in.
+ object 5: Data sources we actually use
+ object 17: R E PRESENTATIVE PAPE RS
+ object 6: DGArchive dgarchive.caad.fkie.fraunhofer.de — 52,665 DGA domains | Tranco top-1M tranco-list.eu — 89,917 benign domains | hping3 / Slowloris SYN and UDP floods, slow HTTP exhaustion | dnscat2 / iodine DNS tunnelling captures | iperf3 / Ostinato benign background load | CIC-IDS, CTU-13, TON_IoT cross-checked; all bidirectional, hence our own ablation
+ [group object 18]
+   object 19: <FREEFORM (5)>
+   object 20: <FREEFORM (5)>
+ object 21: Luay et al., 2026
+ object 22: IEEE Access
+ object 23: Temporal NetFlow features lift macro-F1 by up to 27%.
+ object 24: Gap. Benchmark only, never a one-way link.
+ [group object 7]
+   object 8: <FREEFORM (5)>
+   object 9: <FREEFORM (5)>
+ object 10: Access we do not have
+ object 11: Real NTRO diode traffic requires clearance. NetFlow v5/v9/IPFIX ingest is now implemented against the lab JSON schema, so replay and live flow records follow the same processing path. | Still unverified. A cleared operator has not yet supplied real NTRO diode traffic; hardware-scale validation is therefore still pending.
+ [group object 25]
+   object 26: <FREEFORM (5)>
+   object 27: <FREEFORM (5)>
+ object 28: Fu et al., 2024
+ object 29: IEEE/ACM ToN
+ object 30: Flow-interaction graphs catch unknown encrypted malware.
+ object 31: Gap. Assumes bidirectional flow pairs.
+ [group object 12]
+   object 13: <FREEFORM (5)>
+   object 14: <FREEFORM (5)>
+ object 15: We measured the gap, not just claimed it
+ [group object 32]
+   object 33: <FREEFORM (5)>
+   object 34: <FREEFORM (5)>
+ object 35: Benka et al., 2025
+ object 36: IEEE Access
+ object 37: ML anomaly detection on real ICS TCP/IP captures.
+ object 16: Every dataset in those 20 papers is bidirectional. Nobody measures what a diode costs. | So we stripped the return direction across 170 labelled flows and scored the same traffic both ways. | One-sided substitute features then raised DDoS F1 by 0.110. Harness: scripts/run_ablation.py.
+ object 38: Gap. Inspects payload, not unidirectional.
+ object 39: Full 20-paper review with DOIs and per-paper gap analysis attached as annexure. | Standards referenced: RFC 3954 (NetFlow v9), RFC 7011 (IPFIX), JA3 fingerprinting spec.
+ object 40: SIH26145 · NTRO · Caffeinated Coders
+====================================================================================================
+FILE: C:\Users\shaik\Downloads\THREX_SIH2026_v3.pptx  slides=6  13.33x7.50in
+====================================================================================================
+
+##### SLIDE 1 #####
+ [group object 2]
+   object 3: <FREEFORM (5)>
+   object 4: <PICTURE (13)>
+   object 5: <PICTURE (13)>
+ object 6: SMART INDIA HACKATHON 2026
+ object 7: Problem Statement ID- SIH26145 | Problem Statement Title- Al-Based Detection of Cyber Threats in Unidirectional IP Traffic | Theme- Blockchain & Cybersecurity | PS Category- Software | Team ID- | Team Name- Caffeinated Coders
+
+##### SLIDE 2 #####
+ Text 0: Proposed Solution
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: A passive detection pipeline for one-way links. It never probes, never completes a handshake, and has no send() path back into the production network.
+ Text 3: DETECTION PIPELINE
+ Shape 4: <AUTO_SHAPE (1)>
+ Text 5: Mirror / TAP | one-way copy
+ Text 6: ▶
+ Shape 7: <AUTO_SHAPE (1)>
+ Text 8: Data Diode | no return path
+ Text 9: ▶
+ Shape 10: <AUTO_SHAPE (1)>
+ Text 11: Feature Engine | rate · entropy · periodicity
+ Text 12: ▶
+ Shape 13: <AUTO_SHAPE (1)>
+ Text 14: Six Detectors | parallel inference
+ Text 15: ▶
+ Shape 16: <AUTO_SHAPE (1)>
+ Text 17: Alert + Evidence | 17-field record
+ Shape 18: <AUTO_SHAPE (1)>
+ Text 19: (a) DDoS
+ Shape 20: <AUTO_SHAPE (1)>
+ Text 21: (b) C2 Beacon
+ Shape 22: <AUTO_SHAPE (1)>
+ Text 23: (c) DGA / DNS
+ Shape 24: <AUTO_SHAPE (1)>
+ Text 25: (d) TLS Malware
+ Shape 26: <AUTO_SHAPE (1)>
+ Text 27: (e) Recon
+ Shape 28: <AUTO_SHAPE (1)>
+ Text 29: (f) Exfiltration
+ Shape 30: <AUTO_SHAPE (1)>
+ Text 31: How it reads the link
+ Text 32: Metadata only.  No payload is decrypted at any point. | JA3 from the ClientHello,  which crosses the link in the clear. | Nothing inline,  so the sensor adds no attack surface.
+ Shape 33: <AUTO_SHAPE (1)>
+ Text 34: What an analyst gets
+ Text 35: 17-field alert:  5-tuple, class, severity, confidence. | 3-6 evidence features,  each with its weight. | Live WebSocket feed,  not an end-of-shift report.
+ Shape 36: <AUTO_SHAPE (1)>
+ Text 37: Innovation and uniqueness
+ Text 38: Six narrow detectors,  not one model. Each alert names a behaviour. | 20 papers, 2024-26.  Every one assumes a return path. | Built for the constraint,  not adapted to it.
+ Shape 39: <AUTO_SHAPE (1)>
+ Text 40: Measured on our hardware.  1,979 flows/sec sustained at batch 256 (p50 0.52 ms, p99 0.54 ms) with the API idle. 163 flows/sec with the dashboard served alongside it, zero drops. Same build, seed 42. We quote the lower figure wherever the system is also serving the dashboard, because that is the honest one.
+
+##### SLIDE 3 #####
+ Text 0: Technical Approach
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: Six detectors, one per PS threat category (a)-(f). Each reads only features a one-way tap can actually see.
+ Table 0: <TABLE (19)>
+ Text 3: Technologies used
+ Text 4: Languages  Python 3.11, TypeScript | Backend  FastAPI, asyncio, Uvicorn, WebSocket | Capture  Scapy (sniff-only), NetFlow/IPFIX parser | ML  scikit-learn, LightGBM, NumPy, SciPy (FFT) | Frontend  React 19, Vite, Recharts | Data  PostgreSQL, Redis, SQLite fallback | Deploy  Docker Compose, Nginx, Prometheus /health | Hardware  Commodity x86 server. No appliance, no GPU.
+ Text 5: Methodology
+ Text 6: Ingest → flow assembly → feature extraction → batched inference → scoring → alert. | Async queue: capture never blocks on inference. Backpressure on replay, drop-counting on a live tap. | Deterministic: seed 42, same corpus gives the same numbers on any machine.
+ Shape 7: <AUTO_SHAPE (1)>
+ Text 8: What a one-way tap costs us
+ Text 9: JA3S needs the ServerHello, which we cannot see, so we do not use it. syn_ack_ratio and byte_ratio_outbound were removed for the same reason and replaced with one-sided substitutes.
+
+##### SLIDE 4 #####
+ Text 0: Feasibility and Viability
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: RISKS, AND WHAT WE DO ABOUT EACH
+ Shape 3: <AUTO_SHAPE (1)>
+ Text 4: Risk 1.  Real diode traffic needs clearance we do not have
+ Text 5: Mitigation.  We build on the sources the statement itself names: hping3, Slowloris, dnscat2/iodine, DGArchive, Tranco. The alert schema matches NetFlow/IPFIX, so a cleared operator can point the sensor at live telemetry without code changes.
+ Shape 6: <AUTO_SHAPE (1)>
+ Text 7: Risk 2.  C2 beacon precision is 0.30, our weakest number
+ Text 8: Mitigation.  Scoring periodicity without destination context made NTP and ordinary telemetry look like beacons. Fan-in is now gated. Still the first thing we would fix with more time.
+ Shape 9: <AUTO_SHAPE (1)>
+ Text 10: Risk 3.  Accuracy drifts as traffic patterns change
+ Text 11: Mitigation.  Detectors are independent, so one can be retrained in isolation. Every metric ships beside a naive baseline, so a silently broken model is visible rather than flattering.
+ Shape 12: <AUTO_SHAPE (1)>
+ Text 13: Weaknesses we found ourselves, and fixed
+ Text 14: DGA scored AUC 1.00 on our first corpus. Domain length alone separated the classes. Rebuilt on 142,582 real domains, dropped length: CV AUC 0.9966. | DDoS fired on every SYN burst. Moved to flow rate plus source-IP entropy.
+ Shape 15: <AUTO_SHAPE (1)>
+ Text 16: Feasibility: it already runs
+ Text 17: Prototype deployed: live SOC dashboard, WebSocket feed, report generator. | Software-only on commodity servers. Modular detectors.
+ Shape 18: <AUTO_SHAPE (1)>
+ Text 19: All five PS constraints met
+ Text 20: ✓
+ Text 21: (a) Read-only ingest  no send() path exists
+ Text 22: ✓
+ Text 23: (b) No decryption  metadata only
+ Text 24: ✓
+ Text 25: (c) Streaming  p50 1.54 ms while serving
+ Text 26: ✓
+ Text 27: (d) Stated rate  1,979 flows/sec, zero drops
+ Text 28: ✓
+ Text 29: (e) Alert schema  17 fields incl. severity
+ Text 30: RUNNING TODAY
+ Image 1: <PICTURE (13)>
+ Image 2: <PICTURE (13)>
+ Text 31: Not built yet:  JA4 fingerprints, QUIC, NetFlow/IPFIX live ingest. Named in the PS, on the roadmap.
+
+##### SLIDE 5 #####
+ Text 0: Impact and Benefits
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Shape 2: <AUTO_SHAPE (1)>
+ Text 3: 0 of 6   →   6 of 6
+ Text 4: PS threat classes detectable on a unidirectional link | Working: Suricata, Zeek and commercial NDR each require the return path, so on a diode link their coverage is 0 of 6 today. THREX covers all six, and our own ablation shows removing the return direction costs 0.000 F1 once one-sided substitute features are used.
+ Table 0: <TABLE (19)>
+ Shape 5: <AUTO_SHAPE (1)>
+ Text 6: 1,979
+ Text 7: flows / sec
+ Text 8: batch 256, API idle
+ Shape 9: <AUTO_SHAPE (1)>
+ Text 10: 1.54
+ Text 11: ms p50 latency
+ Text 12: while serving live
+ Shape 13: <AUTO_SHAPE (1)>
+ Text 14: 0.9966
+ Text 15: DGA CV AUC
+ Text 16: baseline 0.9384
+ Shape 17: <AUTO_SHAPE (1)>
+ Text 18: 0
+ Text 19: dropped flows
+ Text 20: measured, not assumed
+ Shape 21: <AUTO_SHAPE (1)>
+ Text 22: Benefits
+ Text 23: Economic.  Open-source ML stack on commodity servers. No appliance, no per-seat licence, versus high-licence commercial NDR. | Operational.  Six threat classes from one passive sensor; analysts triage from evidence, not a bare score.
+ Shape 24: <AUTO_SHAPE (1)>
+ Text 25: Reproducible
+ Text 26: Every figure regenerates from scripts/regenerate_evaluation.py. Seed 42 throughout.
+
+##### SLIDE 6 #####
+ Text 0: Research and References
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: 20 papers reviewed (2024-26). Five of six research dimensions are well served. The sixth, the unidirectional diode link, is the one NTRO actually operates in.
+ Text 3: Data sources we actually use
+ Text 4: DGArchive  dgarchive.caad.fkie.fraunhofer.de — 52,665 DGA domains | Tranco top-1M  tranco-list.eu — 89,917 benign domains | hping3 / Slowloris  SYN and UDP floods, slow HTTP exhaustion | dnscat2 / iodine  DNS tunnelling captures | iperf3 / Ostinato  benign background load | CIC-IDS, CTU-13, TON_IoT  cross-checked; all bidirectional, hence our own ablation
+ Shape 5: <AUTO_SHAPE (1)>
+ Text 6: Access we do not have
+ Text 7: Real NTRO diode traffic requires clearance. We use the lab and synthetic sources the statement itself names, and match the NetFlow/IPFIX schema so a cleared operator can point the sensor at live telemetry without code changes.
+ Shape 8: <AUTO_SHAPE (1)>
+ Text 9: We measured the gap, not just claimed it
+ Text 10: Every dataset in those 20 papers is bidirectional. Nobody measures what a diode costs. | So we stripped the return direction across 170 labelled flows and scored the same traffic both ways. | One-sided substitute features then raised DDoS F1 by 0.110. Harness: scripts/run_ablation.py.
+ Text 11: REPRESENTATIVE PAPERS
+ Shape 12: <AUTO_SHAPE (1)>
+ Text 13: Luay et al., 2026
+ Text 14: IEEE Access
+ Text 15: Temporal NetFlow features lift macro-F1 by up to 27%.
+ Text 16: Gap.  Benchmark only, never a one-way link.
+ Shape 17: <AUTO_SHAPE (1)>
+ Text 18: Fu et al., 2024
+ Text 19: IEEE/ACM ToN
+ Text 20: Flow-interaction graphs catch unknown encrypted malware.
+ Text 21: Gap.  Assumes bidirectional flow pairs.
+ Shape 22: <AUTO_SHAPE (1)>
+ Text 23: Benka et al., 2025
+ Text 24: IEEE Access
+ Text 25: ML anomaly detection on real ICS TCP/IP captures.
+ Text 26: Gap.  Inspects payload, not unidirectional.
+ Text 27: Full 20-paper review with DOIs and per-paper gap analysis attached as annexure. Standards referenced: RFC 3954 (NetFlow v9), RFC 7011 (IPFIX), JA3 fingerprinting spec.
+====================================================================================================
+FILE: C:\Users\shaik\Downloads\THREX_SIH2026_v3 (1).pptx  slides=6  13.33x7.50in
+====================================================================================================
+
+##### SLIDE 1 #####
+ Image 0: <PICTURE (13)>
+ Image 1: <PICTURE (13)>
+ Text 0: SMART INDIA HACKATHON 2026
+ Text 1: Problem Statement ID  SIH26145
+ Text 2: Problem Statement Title  AI-Based Detection of Cyber Threats in Unidirectional IP Traffic
+ Text 3: Theme  Blockchain & Cybersecurity
+ Text 4: PS Category  Software
+ Text 5: Team ID  
+ Text 6: Team Name  Caffeinated Coders
+
+##### SLIDE 2 #####
+ Text 0: Proposed Solution
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: A passive detection pipeline for one-way links. It never probes, never completes a handshake, and has no send() path back into the production network.
+ Text 3: DETECTION PIPELINE
+ Shape 4: <AUTO_SHAPE (1)>
+ Text 5: Mirror / TAP | one-way copy
+ Text 6: ▶
+ Shape 7: <AUTO_SHAPE (1)>
+ Text 8: Data Diode | no return path
+ Text 9: ▶
+ Shape 10: <AUTO_SHAPE (1)>
+ Text 11: Feature Engine | rate · entropy · periodicity
+ Text 12: ▶
+ Shape 13: <AUTO_SHAPE (1)>
+ Text 14: Six Detectors | parallel inference
+ Text 15: ▶
+ Shape 16: <AUTO_SHAPE (1)>
+ Text 17: Alert + Evidence | 17-field record
+ Shape 18: <AUTO_SHAPE (1)>
+ Text 19: (a) DDoS
+ Shape 20: <AUTO_SHAPE (1)>
+ Text 21: (b) C2 Beacon
+ Shape 22: <AUTO_SHAPE (1)>
+ Text 23: (c) DGA / DNS
+ Shape 24: <AUTO_SHAPE (1)>
+ Text 25: (d) TLS Malware
+ Shape 26: <AUTO_SHAPE (1)>
+ Text 27: (e) Recon
+ Shape 28: <AUTO_SHAPE (1)>
+ Text 29: (f) Exfiltration
+ Shape 30: <AUTO_SHAPE (1)>
+ Text 31: How it reads the link
+ Text 32: Metadata only.  No payload is decrypted at any point. | JA3 from the ClientHello,  which crosses the link in the clear. | Nothing inline,  so the sensor adds no attack surface.
+ Shape 33: <AUTO_SHAPE (1)>
+ Text 34: What an analyst gets
+ Text 35: 17-field alert:  5-tuple, class, severity, confidence. | 3-6 evidence features,  each with its weight. | Live WebSocket feed,  not an end-of-shift report.
+ Shape 36: <AUTO_SHAPE (1)>
+ Text 37: Innovation and uniqueness
+ Text 38: Six narrow detectors,  not one model. Each alert names a behaviour. | 20 papers, 2024-26.  Every one assumes a return path. | Built for the constraint,  not adapted to it.
+ Shape 39: <AUTO_SHAPE (1)>
+ Text 40: Measured on our hardware.  1,979 flows/sec sustained at batch 256 (p50 0.52 ms, p99 0.54 ms) with the API idle. 163 flows/sec with the dashboard served alongside it, zero drops. Same build, seed 42. We quote the lower figure wherever the system is also serving the dashboard, because that is the honest one.
+
+##### SLIDE 3 #####
+ Text 0: Technical Approach
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: Six detectors, one per PS threat category (a)-(f). Each reads only features a one-way tap can actually see.
+ Table 0: <TABLE (19)>
+ Text 3: Technologies used
+ Text 4: Languages  Python 3.11, TypeScript | Backend  FastAPI, asyncio, Uvicorn, WebSocket | Capture  Scapy (sniff-only), NetFlow/IPFIX parser | ML  scikit-learn, LightGBM, NumPy, SciPy (FFT)
+ Text 5: Frontend  React 19, Vite, Recharts | Data  PostgreSQL, Redis, SQLite fallback | Deploy  Docker Compose, Nginx, Prometheus /health | Hardware  Commodity x86 server. No appliance, no GPU.
+ Text 6: JA3S needs the ServerHello, which a one-way tap cannot see, so we do not use it. syn_ack_ratio and byte_ratio_outbound were removed for the same reason and replaced with one-sided substitutes.
+ Text 7: VALIDATION — DGA CLASSIFIER, 142,582 REAL DOMAINS, SEED 42
+ Image 1: <PICTURE (13)>
+
+##### SLIDE 4 #####
+ Text 0: Feasibility and Viability
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: RISKS, AND WHAT WE DO ABOUT EACH
+ Shape 3: <AUTO_SHAPE (1)>
+ Text 4: Risk 1.  Real diode traffic needs clearance we do not have
+ Text 5: Mitigation.  We build on the sources the statement itself names: hping3, Slowloris, dnscat2/iodine, DGArchive, Tranco. The alert schema matches NetFlow/IPFIX, so a cleared operator can point the sensor at live telemetry without code changes.
+ Shape 6: <AUTO_SHAPE (1)>
+ Text 7: Risk 2.  C2 beacon precision is 0.30, our weakest number
+ Text 8: Mitigation.  Scoring periodicity without destination context made NTP and ordinary telemetry look like beacons. Fan-in is now gated. Still the first thing we would fix with more time.
+ Shape 9: <AUTO_SHAPE (1)>
+ Text 10: Risk 3.  Accuracy drifts as traffic patterns change
+ Text 11: Mitigation.  Detectors are independent, so one can be retrained in isolation. Every metric ships beside a naive baseline, so a silently broken model is visible rather than flattering.
+ Shape 12: <AUTO_SHAPE (1)>
+ Text 13: Weaknesses we found ourselves, and fixed
+ Text 14: DGA scored AUC 1.00 on our first corpus. Domain length alone separated the classes. Rebuilt on 142,582 real domains, dropped length: CV AUC 0.9966. | DDoS fired on every SYN burst. Moved to flow rate plus source-IP entropy.
+ Shape 15: <AUTO_SHAPE (1)>
+ Text 16: Feasibility: it already runs
+ Text 17: Prototype deployed: live SOC dashboard, WebSocket feed, report generator. | Software-only on commodity servers. Modular detectors.
+ Shape 18: <AUTO_SHAPE (1)>
+ Text 19: All five PS constraints met
+ Text 20: ✓
+ Text 21: (a) Read-only ingest  no send() path exists
+ Text 22: ✓
+ Text 23: (b) No decryption  metadata only
+ Text 24: ✓
+ Text 25: (c) Streaming  p50 1.54 ms while serving
+ Text 26: ✓
+ Text 27: (d) Stated rate  1,979 flows/sec, zero drops
+ Text 28: ✓
+ Text 29: (e) Alert schema  17 fields incl. severity
+ Text 30: RUNNING TODAY
+ Image 1: <PICTURE (13)>
+ Image 2: <PICTURE (13)>
+ Text 31: Not built yet:  JA4 fingerprints, QUIC, NetFlow/IPFIX live ingest. Named in the PS, on the roadmap.
+
+##### SLIDE 5 #####
+ Text 0: Impact and Benefits
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Shape 2: <AUTO_SHAPE (1)>
+ Text 3: 0 of 6   →   6 of 6
+ Text 4: PS threat classes detectable on a unidirectional link | Working: Suricata, Zeek and commercial NDR each require the return path, so on a diode link their coverage is 0 of 6 today. THREX covers all six, and our own ablation shows removing the return direction costs 0.000 F1 once one-sided substitute features are used.
+ Table 0: <TABLE (19)>
+ Shape 5: <AUTO_SHAPE (1)>
+ Text 6: 1,979
+ Text 7: flows / sec
+ Text 8: batch 256, API idle
+ Shape 9: <AUTO_SHAPE (1)>
+ Text 10: 1.54
+ Text 11: ms p50 latency
+ Text 12: while serving live
+ Shape 13: <AUTO_SHAPE (1)>
+ Text 14: 0.9966
+ Text 15: DGA CV AUC
+ Text 16: baseline 0.9384
+ Shape 17: <AUTO_SHAPE (1)>
+ Text 18: 0
+ Text 19: dropped flows
+ Text 20: measured, not assumed
+ Shape 21: <AUTO_SHAPE (1)>
+ Text 22: Benefits
+ Text 23: Economic.  Open-source ML stack on commodity servers. No appliance, no per-seat licence, versus high-licence commercial NDR. | Operational.  Six threat classes from one passive sensor; analysts triage from evidence, not a bare score.
+ Shape 24: <AUTO_SHAPE (1)>
+ Text 25: Reproducible
+ Text 26: Every figure regenerates from scripts/regenerate_evaluation.py. Seed 42 throughout.
+
+##### SLIDE 6 #####
+ Text 0: Research and References
+ Image 0: <PICTURE (13)>
+ Text 1: SIH26145  ·  NTRO  ·  Caffeinated Coders
+ Text 2: 20 papers reviewed (2024-26). Five of six research dimensions are well served. The sixth, the unidirectional diode link, is the one NTRO actually operates in.
+ Text 3: Data sources we actually use
+ Text 4: DGArchive  dgarchive.caad.fkie.fraunhofer.de — 52,665 DGA domains | Tranco top-1M  tranco-list.eu — 89,917 benign domains | hping3 / Slowloris  SYN and UDP floods, slow HTTP exhaustion | dnscat2 / iodine  DNS tunnelling captures | iperf3 / Ostinato  benign background load | CIC-IDS, CTU-13, TON_IoT  cross-checked; all bidirectional, hence our own ablation
+ Shape 5: <AUTO_SHAPE (1)>
+ Text 6: Access we do not have
+ Text 7: Real NTRO diode traffic requires clearance. We use the lab and synthetic sources the statement itself names, and match the NetFlow/IPFIX schema so a cleared operator can point the sensor at live telemetry without code changes.
+ Shape 8: <AUTO_SHAPE (1)>
+ Text 9: We measured the gap, not just claimed it
+ Text 10: Every dataset in those 20 papers is bidirectional. Nobody measures what a diode costs. | So we stripped the return direction across 170 labelled flows and scored the same traffic both ways. | One-sided substitute features then raised DDoS F1 by 0.110. Harness: scripts/run_ablation.py.
+ Text 11: REPRESENTATIVE PAPERS
+ Shape 12: <AUTO_SHAPE (1)>
+ Text 13: Luay et al., 2026
+ Text 14: IEEE Access
+ Text 15: Temporal NetFlow features lift macro-F1 by up to 27%.
+ Text 16: Gap.  Benchmark only, never a one-way link.
+ Shape 17: <AUTO_SHAPE (1)>
+ Text 18: Fu et al., 2024
+ Text 19: IEEE/ACM ToN
+ Text 20: Flow-interaction graphs catch unknown encrypted malware.
+ Text 21: Gap.  Assumes bidirectional flow pairs.
+ Shape 22: <AUTO_SHAPE (1)>
+ Text 23: Benka et al., 2025
+ Text 24: IEEE Access
+ Text 25: ML anomaly detection on real ICS TCP/IP captures.
+ Text 26: Gap.  Inspects payload, not unidirectional.
+ Text 27: Full 20-paper review with DOIs and per-paper gap analysis attached as annexure. Standards referenced: RFC 3954 (NetFlow v9), RFC 7011 (IPFIX), JA3 fingerprinting spec.

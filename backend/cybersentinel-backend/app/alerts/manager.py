@@ -30,6 +30,27 @@ class AlertManager:
         self._threat_counts: Dict[str, int] = {}  # threat_class -> count
         self._severity_counts: Dict[str, int] = {}  # severity -> count
         self._last_dedup_cleanup = time.time()
+        # dedup_key -> alert_id of the live alert for that key
+        self._dedup_index: Dict[tuple, str] = {}
+        # Bound on in-memory active alerts (oldest evicted first; they remain
+        # in the database). Previously this dict grew without limit.
+        self.max_active = max(1000, max_history)
+
+    def _evict_if_needed(self):
+        overflow = len(self._active_alerts) - self.max_active
+        if overflow <= 0:
+            return
+        for aid in list(self._active_alerts.keys())[:overflow]:
+            old = self._active_alerts.pop(aid, None)
+            if old is not None:
+                key = (old.threat_class, old.source_ip.lower(), old.destination_ip.lower(), old.protocol)
+                if self._dedup_index.get(key) == aid:
+                    del self._dedup_index[key]
+
+    def flush(self, timeout: float = 10.0) -> bool:
+        """Block until queued alerts are committed to the database."""
+        from app.alerts.writer import get_alert_writer
+        return get_alert_writer().flush(timeout)
 
     def add_alert(self, alert: Alert) -> Optional[Alert]:
         """Add an alert, applying deduplication and aggregation.
@@ -56,19 +77,24 @@ class AlertManager:
                 self._cleanup_history()
                 self._last_dedup_cleanup = current_time
 
-            # Check for existing alert with same dedup key
+            # Check for existing alert with same dedup key. O(1) index lookup:
+            # the previous linear scan over every active alert made each
+            # add_alert slower as alerts accumulated (spoofed-source floods
+            # create one active alert per source).
             existing_id = None
-            for aid, existing in self._active_alerts.items():
-                existing_key = (
-                    existing.threat_class,
-                    existing.source_ip.lower(),
-                    existing.destination_ip.lower(),
-                    existing.protocol,
-                )
-                if existing_key == dedup_key and (current_time - existing.timestamp.timestamp()) < 300:
+            cand = self._dedup_index.get(dedup_key)
+            if cand is not None:
+                existing = self._active_alerts.get(cand)
+                if existing is not None and (current_time - existing.timestamp.timestamp()) < 300:
                     # Same threat type, same flow, within 5-min window => merge
-                    existing_id = aid
-                    break
+                    existing_id = cand
+
+            # A worker may have pre-merged n identical-key detections into
+            # this one (multi-core coalescing); counters stay per detection.
+            n_det = 1
+            rf = getattr(alert, "raw_features", None)
+            if isinstance(rf, dict) and "_coalesced" in rf:
+                n_det = max(1, int(rf.pop("_coalesced") or 1))
 
             if existing_id:
                 # Merge with existing alert
@@ -80,26 +106,23 @@ class AlertManager:
                 self._update_history(alert)
 
                 # Update threat counts
-                self._update_threat_counts(alert.threat_class, 1)
+                self._update_threat_counts(alert.threat_class, n_det)
 
-                logger.info(f"Merged duplicate alert: {existing_id}")
+                logger.debug("Merged duplicate alert: %s", existing_id)
                 return alert
 
             # New alert - add to active
             self._active_alerts[alert.alert_id] = alert
+            self._dedup_index[dedup_key] = alert.alert_id
+            self._evict_if_needed()
             self._update_history(alert)
-            self._update_threat_counts(alert.threat_class, 1)
-            # Persist to SQLite (best-effort, sync)
+            self._update_threat_counts(alert.threat_class, n_det)
+            # Persist to SQLite: queued to a background writer (one WAL
+            # connection, batched executemany) instead of opening a connection
+            # and committing per alert on the event loop.
             try:
-                from app.db.session import get_db
-                import json
-                conn = get_db()
-                cur = conn.cursor()
-                evidence_json = json.dumps([{"feature_name": e.feature_name, "value": e.value, "contribution": e.contribution, "description": e.description} for e in alert.evidence])
-                cur.execute("""INSERT OR IGNORE INTO alerts (alert_id, timestamp, flow_id, threat_class, severity, confidence, source_ip, source_port, destination_ip, destination_port, protocol, bytes_transferred, packet_count, duration_seconds, evidence, model_version, raw_features) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (alert.alert_id, alert.timestamp.isoformat() if hasattr(alert.timestamp, 'isoformat') else str(alert.timestamp), alert.flow_id, alert.threat_class, alert.severity, alert.confidence, alert.source_ip, alert.source_port, alert.destination_ip, alert.destination_port, alert.protocol, alert.bytes_transferred, alert.packet_count, alert.duration_seconds, evidence_json, alert.model_version, json.dumps(alert.raw_features or {})))
-                conn.commit()
-                conn.close()
+                from app.alerts.writer import get_alert_writer
+                get_alert_writer().submit(alert)
             except Exception as e:
                 logger.debug(f"DB persist skipped: {e}")
             logger.debug(f"New alert added: {alert.alert_id} - {alert.threat_class}")
@@ -205,6 +228,7 @@ class AlertManager:
                         ts_dt = datetime.now(timezone.utc)
                     alert = Alert(alert_id=r[0], timestamp=ts_dt, flow_id=r[2], threat_class=r[3], severity=r[4], confidence=r[5], source_ip=r[6], source_port=r[7], destination_ip=r[8], destination_port=r[9], protocol=r[10], bytes_transferred=r[11], packet_count=r[12], duration_seconds=r[13], evidence=evidence, model_version=r[15], raw_features=json.loads(r[16]) if r[16] else {})
                     self._active_alerts[alert.alert_id]=alert
+                    self._dedup_index[(alert.threat_class, alert.source_ip.lower(), alert.destination_ip.lower(), alert.protocol)] = alert.alert_id
                     self._alert_history.append(alert)
                     loaded+=1
                 except Exception:

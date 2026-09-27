@@ -7,6 +7,7 @@ Supports:
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -48,7 +49,7 @@ class PacketInfo:
 
     __slots__ = ("src_ip", "dst_ip", "src_port", "dst_port",
                  "protocol", "timestamp", "flags", "ja3", "ja3s",
-                 "dns_query", "dns_qtype", "packet_size")
+                 "dns_query", "dns_qtype", "packet_size", "tls_counts")
 
     def __init__(self, **kwargs):
         self.src_ip = kwargs.get("src_ip", "0.0.0.0")
@@ -63,6 +64,8 @@ class PacketInfo:
         self.dns_query = kwargs.get("dns_query", "")
         self.dns_qtype = kwargs.get("dns_qtype", 0)
         self.packet_size = kwargs.get("packet_size", 0)
+        # (ciphers, extensions, curves, point_formats) from a TLS ClientHello
+        self.tls_counts = kwargs.get("tls_counts")
 
     def to_dict(self) -> dict:
         return {
@@ -81,6 +84,9 @@ class PacketInfo:
         }
 
 
+_SERIES_CAP = 64
+
+
 class FlowState:
     """State for a single flow, accumulating packet metadata.
 
@@ -96,7 +102,7 @@ class FlowState:
                  "bytes_transferred", "start_time", "end_time",
                  "proto_flags", "packet_sizes", "timestamps",
                  "raw_features", "ttl_expiry", "ja3", "ja3s",
-                 "dns_query", "dns_qtype", "_packets")
+                 "dns_query", "dns_qtype", "_packets", "closed")
 
     def __init__(self, key: str, src_ip: str, dst_ip: str,
                  protocol: str, src_port: int | None = None, dst_port: int | None = None,
@@ -126,6 +132,11 @@ class FlowState:
         self.ja3s: str = ""
         self.dns_query: str = ""
         self.dns_qtype: int = 0
+        # Set when a TCP FIN/RST is observed; FlowBuilder exports closed flows
+        # immediately (NetFlow-style) instead of waiting for the idle timeout.
+        self.closed: bool = False
+        # First packets only (SYN-ratio features read this); capped like the
+        # other series so a long flow cannot grow it without bound.
         self._packets: List[PacketInfo] = []
 
     def add_packet(self, pkt_info: PacketInfo):
@@ -137,8 +148,16 @@ class FlowState:
         self.start_time = min(self.start_time, pkt_info.timestamp)
         self.end_time = max(self.end_time, pkt_info.timestamp)
         self.proto_flags.add(pkt_info.flags)
-        self.packet_sizes.append(pkt_info.packet_size)
-        self.timestamps.append(pkt_info.timestamp)
+        # Per-packet series are capped: every consumer reads at most the first
+        # ~50 entries (TLS size sequence, to_dict, beacon timing), and an
+        # uncapped list lets one long flood flow grow without bound.
+        if len(self.timestamps) < _SERIES_CAP:
+            self.packet_sizes.append(pkt_info.packet_size)
+            self.timestamps.append(pkt_info.timestamp)
+            self._packets.append(pkt_info)
+        if self.protocol == "tcp" and pkt_info.flags and (
+                "F" in pkt_info.flags or "R" in pkt_info.flags):
+            self.closed = True
         # Preserve TLS/DNS metadata if present
         if pkt_info.ja3:
             self.ja3 = pkt_info.ja3
@@ -147,7 +166,10 @@ class FlowState:
         if pkt_info.dns_query:
             self.dns_query = pkt_info.dns_query
             self.dns_qtype = pkt_info.dns_qtype
-        self._packets.append(pkt_info)
+        tc = getattr(pkt_info, "tls_counts", None)
+        if tc:
+            (self.raw_features["ciphers_count"], self.raw_features["extensions_count"],
+             self.raw_features["curves_count"], self.raw_features["point_formats_count"]) = tc
 
     def duration_seconds(self) -> float:
         """Return flow duration in seconds."""
@@ -293,18 +315,11 @@ def _flowstate_from_json(entry: Dict[str, Any]) -> FlowState | None:
         fs.ja3s = entry.get("ja3s", "")
         fs.dns_query = entry.get("dns_query", "")
         fs.dns_qtype = entry.get("dns_qtype", 0)
-        # synthesize internal packets for syn ratio features
-        # Store at least one PacketInfo so detectors that inspect _packets work
-        if fs.packet_count and not fs._packets:
-            for i in range(min(fs.packet_count, 10)):
-                fs._packets.append(PacketInfo(
-                    src_ip=src_ip, dst_ip=dst_ip,
-                    src_port=src_port, dst_port=dst_port,
-                    protocol=protocol,
-                    timestamp=fs.timestamps[i % len(fs.timestamps)] if fs.timestamps else fs.start_time,
-                    flags=flags[0] if isinstance(flags, list) and flags else "",
-                    packet_size=fs.packet_sizes[0] if fs.packet_sizes else 60,
-                ))
+        # (Up to 10 placeholder PacketInfo objects used to be synthesized here
+        # "for SYN-ratio features". No detector reads them - the only consumer,
+        # ddos_features.compute_syn_flood_ratio, is called solely by the
+        # non-runnable scripts/train_ddos.py - and building them was ~40% of
+        # record->FlowState cost. Removed; detection output is unchanged.)
         return fs
     except Exception as e:
         logger.warning(f"[pcap_reader] Failed to build FlowState from JSON entry: {e}")
@@ -420,6 +435,22 @@ async def pcap_reader(filepath: str) -> AsyncGenerator[PacketInfo, None]:
         async for pkt in _json_flow_reader(filepath):
             yield pkt
         return
+
+    # Fast struct-based parser first (pcap / pcapng; ~10x scapy, extracts UDP
+    # DNS and real JA3). Falls back to scapy only for formats it rejects.
+    try:
+        from app.ingest.fast_pcap import iter_pcap
+        n = 0
+        for pkt in iter_pcap(filepath):
+            yield pkt
+            n += 1
+            if n % 5000 == 0:
+                await asyncio.sleep(0)  # keep the API responsive on large files
+        return
+    except ValueError:
+        pass  # not pcap/pcapng -> scapy / JSON fallbacks below
+    except Exception as e:
+        logger.warning(f"[pcap_reader] fast parser failed on {filepath}: {e}; trying scapy")
 
     # Try JSON fallback even for .pcap if scapy unavailable
     if not SCAPY_AVAILABLE:

@@ -114,3 +114,29 @@ def extract_exfil_features(flow: Any) -> dict:
     )
 
     return features
+
+def compute_one_sided_exfil_features(outbound_bytes: int, packet_count: int, dur: float) -> dict:
+    """Exfiltration signal computable from the outbound direction alone.
+
+    The PS names "outbound-to-inbound byte ratio" as the intended signal, but
+    a genuine unidirectional tap never observes inbound_bytes at all — the
+    previous implementation defaulted it to 0, which made the displayed
+    "outbound_inbound_ratio" numerically equal to outbound_bytes and
+    "byte_skew" always exactly 1.0. Both looked like real bidirectional
+    evidence while actually being a zero-filled placeholder. This computes
+    the same underlying anomaly (a large, asymmetric transfer) from
+    quantities we can actually observe: absolute outbound volume and the
+    average packet size, matching scripts/run_ablation.py's validated
+    one-sided substitutes (outbound_bytes_abs, bytes_per_packet).
+    """
+    bpp = float(outbound_bytes) / max(float(packet_count), 1.0)
+    throughput = float(outbound_bytes) / max(dur, 1.0)
+    return {
+        "outbound_bytes_abs": float(outbound_bytes),
+        "bytes_per_packet": bpp,
+        "throughput_bytes_sec": throughput,
+        # Large volume in large packets reads as bulk transfer rather than
+        # chatty small-packet traffic — the one-sided proxy for "this flow
+        # is carrying data out, not just talking."
+        "exfil_likely": outbound_bytes > 1 * 1024 * 1024 and bpp > 500.0,
+    }

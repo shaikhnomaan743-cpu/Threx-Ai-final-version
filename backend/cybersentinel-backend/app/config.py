@@ -38,7 +38,34 @@ class Settings(BaseSettings):
 
     # Security
     api_key: str | None = None
-    rate_limit_per_minute: int = 120
+    rate_limit_per_minute: int = 600  # single-operator dashboard polls ~5 endpoints every 2s
+
+    # Startup strictness
+    # False (default): if the inference engine cannot load, startup FAILS loudly.
+    # A backend that cannot detect threats should not pretend to be healthy.
+    # Set true only for UI work against a machine without the ML wheels.
+    allow_degraded_start: bool = False
+
+    # Ingest queue / batch inference
+    # Flows are enqueued by the capture side and drained by a worker task, so
+    # packet ingestion never blocks the FastAPI event loop.
+    ingest_queue_maxsize: int = 10000
+    ingest_batch_size: int = 64
+    ingest_batch_timeout_ms: int = 50
+    # Replay pacing for the lab/demo source. 0 = ingest as fast as possible.
+    # Default is throttled: an unthrottled producer plus the batch worker will
+    # monopolise the event loop and starve the HTTP handlers, so the dashboard
+    # stops responding while the pipeline "performs well". Benchmarks set this
+    # to 0 deliberately and do not serve traffic at the same time.
+    replay_target_fps: float = 200.0
+    # Flow-record ingest (NetFlow v5/v9, IPFIX over UDP, listen-only).
+    # 0 disables. When enabled it replaces lab replay as the data source.
+    # Conventional ports: 2055 (NetFlow), 4739 (IPFIX); one socket handles both.
+    flow_listen_port: int = 0
+    flow_listen_host: str = "0.0.0.0"
+    # >0: run the multi-core pipeline (receiver + this many detection worker
+    # processes) for the flow-record listener. 0: single process.
+    parallel_workers: int = 0
 
     model_config = SettingsConfigDict(
         env_file=".env",

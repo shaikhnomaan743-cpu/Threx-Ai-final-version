@@ -3,15 +3,35 @@ import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { ShieldAlert, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PipelineViz from '../components/PipelineViz';
+import { useEffect, useState } from 'react';
 import { useLiveData } from '../hooks/useLiveData';
-import { DETECTION_MIX, TOP_TALKERS } from '../lib/api';
-import { BENCHMARK } from '../lib/utils';
+import { fetchDetectionMix, fetchTopTalkers } from '../lib/api';
+
+type Mix = { cls: string; count: number; color: string };
+type Talker = { ip: string; bytes: number; pkts: number; flows: number; note: string; flagged: boolean };
 
 export default function Overview() {
-  const { metrics, alerts, paused } = useLiveData();
-  const totalDet = DETECTION_MIX.reduce((a,b)=>a+b.count,0);
-  const maxB = Math.max(...TOP_TALKERS.map(t=>t.bytes));
-  const pieData = DETECTION_MIX.map(d=>({name:d.cls,value:d.count,color:d.color}));
+  const { metrics, telemetry, alerts, paused, backendUp } = useLiveData();
+  // Detection mix and top talkers used to be hardcoded literal arrays, so this
+  // panel showed the same six counts and five IPs no matter what the engine
+  // detected. Both are now derived from the live alert feed.
+  const [mix, setMix] = useState<Mix[]>([]);
+  const [talkers, setTalkers] = useState<Talker[]>([]);
+
+  useEffect(() => {
+    let stop = false;
+    const load = () => {
+      fetchDetectionMix().then(d => { if (!stop) setMix(d); }).catch(() => { if (!stop) setMix([]); });
+      fetchTopTalkers(10).then(d => { if (!stop) setTalkers(d); }).catch(() => { if (!stop) setTalkers([]); });
+    };
+    load();
+    const iv = setInterval(load, 5000);
+    return () => { stop = true; clearInterval(iv); };
+  }, []);
+
+  const totalDet = mix.reduce((a,b)=>a+b.count,0);
+  const maxB = Math.max(1, ...talkers.map(t=>t.bytes));
+  const pieData = mix.map(d=>({name:d.cls,value:d.count,color:d.color}));
 
   return (
     <div style={{display:'flex',flexDirection:'column',gap:20}}>
@@ -24,7 +44,7 @@ export default function Overview() {
           <span>·</span>
           <span><span className="num" style={{color:'var(--color-teal)'}}>6</span> detectors active</span>
           <span>·</span>
-          <span>Chain <span className="num" style={{color:'var(--color-green)'}}>#{metrics.chain_height.toLocaleString()}</span></span>
+          <span>p50 <span className="num" style={{color:'var(--color-green)'}}>{telemetry ? `${telemetry.latency.p50_ms.toFixed(2)} ms` : '—'}</span></span>
         </div>
       </div>
 
@@ -53,9 +73,9 @@ export default function Overview() {
       {/* ── METRICS + BENCHMARK ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12}}>
         <MC label="Active Threats" value={metrics.active_threats.toString()} icon="⚠" alert/>
-        <MC label="Flows / sec" value={BENCHMARK.sustained_peak.toString()} sub="88.6 fps lab benchmark"/>
-        <MC label="Inference Latency" value={`~${metrics.detection_latency_ms.toFixed(0)}`} unit="ms" sub="p50 · streaming pipeline"/>
-        <MC label="Total Detections" value={metrics.total_detections.toString()} sub={`${metrics.total_detections} in last hour`}/>
+        <MC label="Flows / sec" value={telemetry ? telemetry.flows_per_sec.toFixed(1) : '—'} sub={telemetry ? `peak ${telemetry.peak_flows_per_sec.toFixed(1)} fps · measured` : 'awaiting backend'}/>
+        <MC label="Inference Latency" value={telemetry ? telemetry.latency.p50_ms.toFixed(2) : '—'} unit="ms" sub={telemetry ? `p95 ${telemetry.latency.p95_ms.toFixed(2)} ms · n=${telemetry.latency.samples}` : 'awaiting backend'}/>
+        <MC label="Total Detections" value={metrics.total_detections.toString()} sub={`${metrics.active_threats} high/critical`}/>
         <MC label="Diode Status" value="PASS-THRU" sub="Passive · read-only ingest" teal/>
       </div>
 
@@ -106,7 +126,7 @@ export default function Overview() {
                 <ResponsiveContainer><PieChart><Pie data={pieData} cx="50%" cy="50%" innerRadius={28} outerRadius={46} dataKey="value" stroke="none">{pieData.map((d,i)=><Cell key={i} fill={d.color}/>)}</Pie></PieChart></ResponsiveContainer>
               </div>
               <div style={{flex:1}}>
-                {DETECTION_MIX.map(d=>(
+                {mix.map(d=>(
                   <div key={d.cls} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',fontSize:12}}>
                     <span style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:6,height:6,borderRadius:'50%',background:d.color}}/>{d.cls}</span>
                     <span className="num" style={{color:d.color,fontWeight:600}}>{d.count}</span>
@@ -120,7 +140,7 @@ export default function Overview() {
           <div className="glass glow-card">
             <div className="panel-head"><h3>TOP SOURCE IPs</h3><span className="sub">Traffic →</span></div>
             <div className="panel-body">
-              {TOP_TALKERS.slice(0,4).map(t=>(
+              {talkers.slice(0,4).map(t=>(
                 <div key={t.ip} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid var(--color-border)',fontSize:12}}>
                   <span className="num" style={{color:t.flagged?'var(--color-red)':'var(--color-text)'}}>{t.ip}</span>
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -138,19 +158,24 @@ export default function Overview() {
           <div className="glass glow-card">
             <div className="panel-head"><h3><Zap size={14} style={{color:'var(--color-amber)'}}/> BENCHMARK</h3></div>
             <div className="panel-body" style={{fontSize:12}}>
-              {[
-                ['Sustained peak',`${BENCHMARK.sustained_peak} flows/sec`],
-                ['p50 latency',`${BENCHMARK.p50_ms} ms`],
-                ['p99 latency',`${BENCHMARK.p99_ms} ms`],
-                ['Zero drops',BENCHMARK.zero_drops?'YES':'NO'],
-                ['Return path',BENCHMARK.return_path],
-              ].map(([k,v])=>(
+              {(telemetry ? [
+                ['Current rate',`${telemetry.flows_per_sec.toFixed(1)} flows/sec`],
+                ['Peak observed',`${telemetry.peak_flows_per_sec.toFixed(1)} flows/sec`],
+                ['p50 latency',`${telemetry.latency.p50_ms.toFixed(2)} ms`],
+                ['p99 latency',`${telemetry.latency.p99_ms.toFixed(2)} ms`],
+                ['Zero drops',telemetry.queue.dropped_flows === 0 ? 'YES' : `NO (${telemetry.queue.dropped_flows})`],
+                ['Return path',telemetry.return_path],
+              ] : [['Status', backendUp ? 'Loading…' : 'Backend unreachable']]).map(([k,v])=>(
                 <div key={k as string} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid var(--color-border)'}}>
                   <span style={{color:'var(--color-text-dim)'}}>{k}</span>
                   <span className="num" style={{fontWeight:500,color:(v as string)==='YES'||(v as string)==='NONE'?'var(--color-green)':'var(--color-text)'}}>{v}</span>
                 </div>
               ))}
-              <div style={{fontSize:10,color:'var(--color-text-muted)',marginTop:8}}>Tested on {BENCHMARK.total_flows} lab flows · mixed threat classes</div>
+              <div style={{fontSize:10,color:'var(--color-text-muted)',marginTop:8}}>
+                {telemetry
+                  ? `Live measurement · ${telemetry.total_flows.toLocaleString()} flows since boot · source ${telemetry.data_source ?? 'unknown'}`
+                  : 'No measurement available'}
+              </div>
             </div>
           </div>
         </div>

@@ -1,99 +1,60 @@
-import type { Alert, Severity, ThreatClass, Evidence, Metric } from './types';
-import { CLASS_EVIDENCE } from './utils';
+import type { Alert, Severity, ThreatClass, Metric } from './types';
+
+/**
+ * Backend data layer.
+ *
+ * Rules this file follows, deliberately:
+ *
+ *  1. No Math.random(), anywhere. Every value rendered by the dashboard comes
+ *     from the backend. This file previously exported generateAlert(),
+ *     seedAlerts() and rI/rF/rH/rP helpers, and every fetcher below ended in a
+ *     `catch { return <randomised object> }`. That meant a backend outage
+ *     produced a dashboard that looked perfectly healthy and full of traffic —
+ *     the single most misleading failure mode a SOC tool can have.
+ *
+ *  2. Failures propagate. Fetchers throw ApiError; pages render an error state.
+ *     "I could not reach the detector" and "the detector found nothing" are
+ *     different answers and must look different.
+ *
+ *  3. No hardcoded headline numbers. TOP_TALKERS and DETECTION_MIX used to be
+ *     literal arrays, so Overview always showed the same six counts and five
+ *     IPs regardless of what the engine actually detected.
+ */
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const HEX = '0123456789abcdef';
-const rH = (n: number) => Array.from({length:n},()=>HEX[(Math.random()*16)|0]).join('');
-const rP = <T>(a: T[]): T => a[(Math.random()*a.length)|0];
-const rI = (a: number, b: number) => Math.round(a+Math.random()*(b-a));
-const rF = (a: number, b: number) => +(a+Math.random()*(b-a)).toFixed(3);
-const pad = (n: number) => n<10?'0'+n:''+n;
-const now = () => { const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
 
-const CLASSES: {c:ThreatClass;s:Severity;conf:[number,number]}[] = [
-  {c:'DDoS',s:'critical',conf:[70,92]},{c:'C2 Beaconing',s:'critical',conf:[68,85]},
-  {c:'DGA',s:'high',conf:[61,80]},{c:'TLS Malware',s:'high',conf:[58,78]},
-  {c:'Recon',s:'medium',conf:[44,66]},{c:'Exfiltration',s:'critical',conf:[75,95]},
-];
-const SRC=['192.0.2.44','198.51.100.10','192.0.2.98','172.16.0.22','10.0.0.50','192.0.2.157','192.0.2.183','192.0.2.10'];
-const DST=['198.51.100.100','203.0.113.50','8.8.8.8','203.0.113.60','104.26.10.5','198.51.100.50'];
-const PORTS=[443,80,8080,53,8443,22,3389,445,1433,993];
-const PROTO=['TCP','UDP','DNS','TLS','QUIC'];
-
-function genEvidence(cls: ThreatClass): Evidence[] {
-  const specs = CLASS_EVIDENCE[cls] || [];
-  return specs.map(s => {
-    let val: string|number;
-    switch(s.key) {
-      case 'packet_rate': val=rI(5000,50000); break;
-      case 'syn_ack_ratio': val=rF(5,15); break;
-      case 'source_entropy': val=rF(0.1,0.5); break;
-      case 'amplification_ratio': val=rF(2,30); break;
-      case 'periodicity_score': val=rF(0.2,0.95); break;
-      case 'dominant_period': val=rF(55,65); break;
-      case 'inter_arrival_cv': val=rF(0.01,0.09); break;
-      case 'jitter': val=rF(100,3000); break;
-      case 'domain_entropy': val=rF(3.5,4.8); break;
-      case 'bigram_likelihood': val=rF(-12,-6); break;
-      case 'digit_ratio': val=rF(15,60); break;
-      case 'consonant_vowel_ratio': val=rF(1.5,4); break;
-      case 'extensions_count': val=rI(0,3); break;
-      case 'ciphers_count': val=rI(1,5); break;
-      case 'min_pkt_size': val=rI(40,200); break;
-      case 'median_pkt_size': val=rI(100,800); break;
-      case 'unique_dst_ports': val=rI(50,2000); break;
-      case 'unique_dst_hosts': val=rI(1,20); break;
-      case 'scan_duration': val=rI(10,300); break;
-      case 'byte_ratio_outbound': val=rF(3.5,25); break;
-      case 'total_bytes': val=rI(500000,50000000); break;
-      case 'avg_pkt_size': val=rI(200,1400); break;
-      case 'flow_duration': val=rI(30,600); break;
-      default: val=rF(0,1);
-    }
-    return { label: s.key, value: val, contribution: rI(10,40) };
-  });
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status = 0) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
 }
 
-let ctr = 0;
-export function generateAlert(): Alert {
-  const k = rP(CLASSES);
-  const sp = rP(PORTS), dp = rP(PORTS);
-  const si = rP(SRC), di = rP(DST);
-  ctr++;
-  return {
-    id: `alert-${ctr}-${rH(4)}`, timestamp: now(), severity: k.s, threat_class: k.c,
-    flow_id: `${si}:${sp} → ${di}:${dp}`,
-    source_ip: si, source_port: sp, destination_ip: di, destination_port: dp,
-    confidence: rI(k.conf[0], k.conf[1]), protocol: rP(PROTO),
-    block_height: 3680 + ctr, block_hash: `${rH(8)}`,
-    evidence: genEvidence(k.c),
-    bytes: rI(1000, 500000), duration: rI(1, 300),
-    status: 'new',
-  };
+async function getJSON<T>(path: string, timeoutMs = 8000): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API}${path}`, { signal: AbortSignal.timeout(timeoutMs) });
+  } catch (e) {
+    throw new ApiError(
+      `Cannot reach backend at ${API}${path} — ${(e as Error).message}`, 0,
+    );
+  }
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = typeof body?.detail === 'string'
+        ? body.detail
+        : body?.detail?.message || body?.detail?.cause || '';
+    } catch { /* non-JSON error body */ }
+    throw new ApiError(`${path} returned ${res.status}${detail ? `: ${detail}` : ''}`, res.status);
+  }
+  return res.json() as Promise<T>;
 }
 
-export const seedAlerts = (n: number) => Array.from({length:n}, generateAlert);
-
-export const TOP_TALKERS = [
-  {ip:'198.51.100.20',bytes:48200000,pkts:31200,flows:42,note:'C2 suspect · 60s beacon',flagged:true},
-  {ip:'192.0.2.98',bytes:34100000,pkts:22800,flows:18,note:'SYN flood source · 14k pps',flagged:true},
-  {ip:'10.0.0.50',bytes:22700000,pkts:15100,flows:89,note:'High DNS query rate',flagged:false},
-  {ip:'172.16.0.22',bytes:18400000,pkts:12200,flows:156,note:'Normal profile',flagged:false},
-  {ip:'203.0.113.60',bytes:8900000,pkts:5900,flows:7,note:'Outbound 8.4 MB',flagged:true},
-];
-
-export const DETECTION_MIX = [
-  {cls:'DDoS',count:87,color:'#f04050'},{cls:'C2 Beaconing',count:64,color:'#e8a020'},
-  {cls:'DGA',count:112,color:'#8060f0'},{cls:'TLS Malware',count:53,color:'#10d4e8'},
-  {cls:'Recon',count:134,color:'#6a7a8c'},{cls:'Exfiltration',count:50,color:'#20c070'},
-];
-
-// ── Backend adapters ──────────────────────────────────────────────
-// The detection endpoints all return a flat array of alert records. The pages
-// below were written against summary objects, so each fetcher normalises the
-// array into the shape its page renders. Without this the pages receive
-// `undefined` where they expect an array and crash to a blank screen.
-
+// ── Shapes returned by the backend ────────────────────────────────────
 type BackendAlert = {
   alert_id: string; timestamp: string; flow_id: string;
   threat_class: string; severity: string; confidence: number;
@@ -105,7 +66,41 @@ type BackendAlert = {
   raw_features?: Record<string, number>;
 };
 
-/** Pull a named evidence/raw_feature value off an alert, with a default. */
+export type ThroughputTelemetry = {
+  flows_per_sec: number; peak_flows_per_sec: number;
+  packets_per_sec: number; bytes_per_sec: number;
+  total_flows: number; total_packets: number; total_bytes: number;
+  latency: {
+    samples: number; total_inferences: number;
+    p50_ms: number; p95_ms: number; p99_ms: number;
+    min_ms: number; max_ms: number; mean_ms: number;
+  };
+  queue: { depth: number; dropped_flows: number };
+  alerts_generated: number;
+  resources: {
+    available: boolean; reason?: string;
+    cpu_percent?: number; memory_rss_mb?: number; memory_percent?: number;
+    system_memory_percent?: number; num_threads?: number;
+  };
+  detection_active: boolean;
+  degraded_reason: string | null;
+  data_source: string | null;
+  return_path: string;
+  uptime_seconds: number;
+  timestamp: string;
+  pipeline?: {
+    mode: 'single_process' | 'multi_core';
+    latency_basis: string;
+    workers?: number; dst_aggregators?: number; records_received?: number;
+    loss?: { exporter_seq_gap_records: number; queue_drops_messages: number;
+             unknown_template_sets: number; malformed_datagrams: number };
+    alerts?: { alerts_in?: number; alerts_new?: number; alerts_merged?: number;
+               pushed?: number; push_suppressed?: number };
+  };
+};
+
+export type TimeSeriesBucket = { offset_s: number; flows: number; packets: number; bytes: number };
+
 const ev = (a: BackendAlert, name: string, dflt = 0): number => {
   const hit = a.evidence?.find(e => e.feature_name === name);
   if (hit && Number.isFinite(hit.value)) return hit.value;
@@ -117,17 +112,6 @@ const pct = (n: number) => Math.round(n * 100);
 const uniq = <T,>(xs: T[]) => Array.from(new Set(xs));
 const avg = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
 
-async function getJSON<T>(path: string): Promise<T> {
-  const r = await fetch(`${API}${path}`);
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
-}
-
-export async function fetchHealth(): Promise<{ok:boolean;status?:string}> {
-  try { const r=await fetch(`${API}/health`,{signal:AbortSignal.timeout(3000)}); const d=await r.json(); return {ok:r.ok,status:d.status}; }
-  catch { return {ok:false}; }
-}
-// Backend threat_class values -> the labels the UI filters and colours on.
 const CLASS_MAP: Record<string, ThreatClass> = {
   ddos: 'DDoS', c2_beacon: 'C2 Beaconing', dga: 'DGA',
   dns_tunnel: 'DNS Tunnel', tls_malware: 'TLS Malware',
@@ -138,7 +122,12 @@ const SEV_MAP: Record<string, Severity> = {
   critical: 'critical', high: 'high', medium: 'medium', low: 'low',
 };
 
-/** ISO timestamp -> HH:MM:SS, matching the live-feed format. */
+export const CLASS_COLOR: Record<string, string> = {
+  'DDoS': '#f04050', 'C2 Beaconing': '#e8a020', 'DGA': '#8060f0',
+  'DNS Tunnel': '#4080f0', 'TLS Malware': '#10d4e8',
+  'Recon': '#6a7a8c', 'Exfiltration': '#20c070',
+};
+
 const clockTime = (iso: string): string => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -146,13 +135,6 @@ const clockTime = (iso: string): string => {
     .map(n => String(n).padStart(2, '0')).join(':');
 };
 
-/**
- * Normalise a backend alert into the `Alert` shape the pages render.
- * The backend sends confidence as 0-1, snake_case threat classes and ISO
- * timestamps; the UI expects 0-100, display labels and a clock time. Without
- * this the confidence column shows "0.085410768...%" and the class filters
- * never match.
- */
 function toAlert(a: BackendAlert): Alert {
   return {
     id: a.alert_id,
@@ -177,172 +159,222 @@ function toAlert(a: BackendAlert): Alert {
   };
 }
 
-export async function fetchThreats(n=50): Promise<Alert[]> {
+// ── Health ────────────────────────────────────────────────────────────
+export type Health = {
+  ok: boolean;
+  status?: string;
+  detection_active?: boolean;
+  degraded_reason?: string;
+  version?: string;
+  error?: string;
+};
+
+export async function fetchHealth(): Promise<Health> {
   try {
-    const raw = await getJSON<BackendAlert[]>(`/threats?limit=${n}`);
-    if (!Array.isArray(raw)) throw new Error('unexpected /threats shape');
-    return raw.map(toAlert);
-  }
-  catch { return seedAlerts(n); }
-}
-export async function fetchThreatById(id: string): Promise<Alert|null> {
-  try { return toAlert(await getJSON<BackendAlert>(`/threats/${id}`)); }
-  catch { return null; }
-}
-
-export async function fetchDNS() {
-  try {
-    const [dga, tunnel] = await Promise.all([
-      getJSON<BackendAlert[]>('/dns/dga'),
-      getJSON<BackendAlert[]>('/dns/tunneling').catch(() => [] as BackendAlert[]),
-    ]);
-    if (!Array.isArray(dga)) throw new Error('unexpected /dns/dga shape');
-
-    // Group DGA hits by source so the panel shows real attribution. The backend
-    // does not emit the queried name itself, so we report the resolver target.
-    const bySource = new Map<string, number>();
-    for (const a of dga) bySource.set(a.source_ip, (bySource.get(a.source_ip) || 0) + 1);
-
+    const d = await getJSON<Record<string, unknown>>('/health', 3000);
     return {
-      total: dga.length + tunnel.length,
-      dga: dga.length,
-      tunnel: tunnel.length,
-      entropy: avg(dga.map(a => ev(a, 'domain_entropy'))),
-      families: Array.from(bySource.entries())
-        .sort((a, b) => b[1] - a[1]).slice(0, 6)
-        .map(([ip, n]) => ({ name: ip, count: n })),
-      samples: dga.slice(0, 12).map(a => ({
-        domain: a.destination_ip,
-        entropy: ev(a, 'domain_entropy').toFixed(2),
-        family: a.severity.toUpperCase(),
-        confidence: pct(a.confidence),
-      })),
+      ok: true,
+      status: d.status as string,
+      detection_active: d.detection_active as boolean,
+      degraded_reason: d.degraded_reason as string | undefined,
+      version: d.version as string,
     };
+  } catch (e) {
+    // The only place a failure becomes a value rather than a throw: "is the
+    // backend up" is a yes/no question and false is a real answer to it.
+    return { ok: false, error: (e as Error).message };
   }
-  catch {
-    return { total:rI(8000,15000), dga:rI(40,120), tunnel:rI(5,20), entropy:rF(3.2,4.1),
-      families:['Nymaim','Matsnu','Suppobox','Gozi','CryptoLocker'].map(n=>({name:n,count:rI(5,35)})),
-      samples:Array.from({length:8},()=>({domain:`${rH(rI(8,16))}.com`,entropy:rF(3.5,4.8).toFixed(2),family:rP(['Nymaim','Matsnu','Suppobox','Gozi','CryptoLocker']),confidence:rI(65,98)}))
+}
+
+// ── Threats ───────────────────────────────────────────────────────────
+export async function fetchThreats(n = 50): Promise<Alert[]> {
+  const raw = await getJSON<BackendAlert[]>(`/threats/?limit=${n}`);
+  if (!Array.isArray(raw)) throw new ApiError('unexpected /threats shape');
+  return raw.map(toAlert);
+}
+
+export async function fetchThreatById(id: string): Promise<Alert | null> {
+  try {
+    return toAlert(await getJSON<BackendAlert>(`/threats/${id}`));
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+// ── Live telemetry ────────────────────────────────────────────────────
+export const fetchTelemetry = () =>
+  getJSON<ThroughputTelemetry>('/api/v1/metrics/throughput');
+
+export async function fetchTimeSeries(buckets = 60, bucketSeconds = 1) {
+  return getJSON<{
+    buckets: number; bucket_seconds: number; series: TimeSeriesBucket[];
+    protocol_distribution: Record<string, number>;
+    observed_flows_in_window: number; window_empty: boolean;
+  }>(`/api/v1/analytics/time-series?buckets=${buckets}&bucket_seconds=${bucketSeconds}`);
+}
+
+export const fetchModelMetrics = () =>
+  getJSON<Record<string, unknown>>('/api/v1/models');
+
+// ── Detection mix / top talkers (computed from real alerts) ───────────
+export async function fetchDetectionMix(): Promise<{ cls: string; count: number; color: string }[]> {
+  const raw = await getJSON<BackendAlert[]>('/threats/?limit=1000');
+  const counts = new Map<string, number>();
+  for (const a of raw) {
+    const label = CLASS_MAP[a.threat_class] || a.threat_class;
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([cls, count]) => ({ cls, count, color: CLASS_COLOR[cls] || '#6a7a8c' }));
+}
+
+export async function fetchTopTalkers(limit = 10) {
+  const [talkers, alerts] = await Promise.all([
+    getJSON<{ ip: string; bytes: number }[]>(`/traffic/top-talkers?limit=${limit}`),
+    getJSON<BackendAlert[]>('/threats/?limit=1000').catch(() => [] as BackendAlert[]),
+  ]);
+  // Annotate each talker with what was actually detected from it, instead of
+  // the fixed editorial strings ("C2 suspect · 60s beacon") this used to ship.
+  const bySource = new Map<string, BackendAlert[]>();
+  for (const a of alerts) {
+    const list = bySource.get(a.source_ip) || [];
+    list.push(a);
+    bySource.set(a.source_ip, list);
+  }
+  return talkers.map(t => {
+    const hits = bySource.get(t.ip) || [];
+    const classes = uniq(hits.map(h => CLASS_MAP[h.threat_class] || h.threat_class));
+    const worst = hits.some(h => ['critical', 'high'].includes(String(h.severity).toLowerCase()));
+    return {
+      ip: t.ip,
+      bytes: t.bytes,
+      pkts: hits.reduce((s, h) => s + (h.packet_count || 0), 0),
+      flows: hits.length,
+      note: classes.length ? classes.join(', ') : 'No detections',
+      flagged: worst,
     };
-  }
+  });
+}
+
+// ── Per-class analytics ───────────────────────────────────────────────
+export async function fetchDNS() {
+  const d = await getJSON<{
+    detection_active: boolean; dga_detections: number; tunnel_detections: number;
+    total: number; mean_domain_entropy: number | null; entropy_samples: number;
+    top_sources: { source_ip: string; detections: number }[];
+    samples: {
+      alert_id: string; source_ip: string; destination_ip: string;
+      domain_entropy: number; bigram_likelihood: number;
+      confidence: number; severity: string;
+    }[];
+  }>('/api/v1/analytics/dns');
+  return {
+    total: d.total,
+    dga: d.dga_detections,
+    tunnel: d.tunnel_detections,
+    entropy: d.mean_domain_entropy,
+    entropySamples: d.entropy_samples,
+    families: d.top_sources.map(s => ({ name: s.source_ip, count: s.detections })),
+    samples: d.samples.map(s => ({
+      domain: s.destination_ip,
+      entropy: s.domain_entropy ? s.domain_entropy.toFixed(2) : '—',
+      family: s.severity.toUpperCase(),
+      confidence: pct(s.confidence),
+    })),
+  };
 }
 
 export async function fetchTLS() {
-  try {
-    const list = await getJSON<BackendAlert[]>('/tls/fingerprints');
-    if (!Array.isArray(list)) throw new Error('unexpected /tls/fingerprints shape');
-    return {
-      sessions: list.length,
-      malware: list.filter(a => a.severity === 'high' || a.severity === 'critical').length,
-      ja3: uniq(list.map(a => a.flow_id)).length,
-      prints: list.slice(0, 12).map(a => ({
-        hash: a.flow_id,
-        ext: ev(a, 'extensions_count'),
-        ciphers: ev(a, 'ciphers_count'),
-        verdict: a.severity === 'critical' ? 'Malware'
-               : a.severity === 'high' ? 'Malware' : 'Suspicious',
-        conf: pct(a.confidence),
-      })),
-    };
-  }
-  catch {
-    return { sessions:rI(200,500), malware:rI(10,55), ja3:rI(12,30),
-      prints:Array.from({length:6},()=>({hash:rH(32),ext:rI(0,3),ciphers:rI(1,5),verdict:rP(['Malware','Suspicious','Unknown C2']),conf:rI(60,95)}))
-    };
-  }
+  const d = await getJSON<{
+    detection_active: boolean; ja3s_available: boolean; ja3s_reason: string;
+    sessions_flagged: number; malware_verdicts: number;
+    fingerprints: {
+      alert_id: string; flow_id: string; source_ip: string;
+      destination_ip: string; extensions_count: number; ciphers_count: number;
+      confidence: number; severity: string;
+    }[];
+  }>('/api/v1/analytics/tls');
+  return {
+    sessions: d.sessions_flagged,
+    malware: d.malware_verdicts,
+    ja3: uniq(d.fingerprints.map(f => f.flow_id)).length,
+    ja3sAvailable: d.ja3s_available,
+    ja3sReason: d.ja3s_reason,
+    prints: d.fingerprints.map(f => ({
+      hash: f.flow_id,
+      ext: f.extensions_count,
+      ciphers: f.ciphers_count,
+      verdict: ['critical', 'high'].includes(String(f.severity).toLowerCase()) ? 'Malware' : 'Suspicious',
+      conf: pct(f.confidence),
+    })),
+  };
 }
 
 export async function fetchRecon() {
-  try {
-    const list = await getJSON<BackendAlert[]>('/recon/scans');
-    if (!Array.isArray(list)) throw new Error('unexpected /recon/scans shape');
-    const SCAN_TYPES = ['SYN scan','TCP connect','UDP scan','FIN scan'];
-    return {
-      total: list.length,
-      active: uniq(list.map(a => a.source_ip)).length,
-      scans: list.slice(0, 15).map(a => {
-        const t = ev(a, 'scan_type', -1);
-        return {
-          src: a.source_ip,
-          ports: Math.round(ev(a, 'unique_dst_ports')),
-          hosts: Math.round(ev(a, 'unique_dst_hosts')),
-          dur: Math.round(a.duration_seconds),
-          tech: t >= 0 && t < SCAN_TYPES.length ? SCAN_TYPES[t] : (a.protocol || 'tcp').toUpperCase() + ' scan',
-        };
-      }),
-    };
-  }
-  catch {
-    return { total:rI(20,60), active:rI(3,8),
-      scans:Array.from({length:6},()=>({src:rP(SRC),ports:rI(50,2000),hosts:rI(1,20),dur:rI(10,300),tech:rP(['SYN scan','TCP connect','UDP scan','FIN scan'])}))
-    };
-  }
+  const list = await getJSON<BackendAlert[]>('/recon/scans');
+  if (!Array.isArray(list)) throw new ApiError('unexpected /recon/scans shape');
+  return {
+    total: list.length,
+    active: uniq(list.map(a => a.source_ip)).length,
+    scans: list.slice(0, 25).map(a => ({
+      src: a.source_ip,
+      ports: Math.round(ev(a, 'unique_dst_ports')),
+      hosts: Math.round(ev(a, 'unique_dst_hosts')),
+      dur: Math.round(a.duration_seconds),
+      tech: `${(a.protocol || 'tcp').toUpperCase()} scan`,
+    })),
+  };
 }
 
 export async function fetchExfil() {
-  try {
-    const list = await getJSON<BackendAlert[]>('/exfil/anomalies');
-    if (!Array.isArray(list)) throw new Error('unexpected /exfil/anomalies shape');
-    const out = (a: BackendAlert) => a.bytes_transferred || ev(a, 'total_bytes_transferred');
-    return {
-      total: list.length,
-      bytes: list.reduce((s, a) => s + out(a), 0),
-      items: list.slice(0, 12).map(a => ({
-        src: a.source_ip,
-        dst: a.destination_ip,
-        out: out(a),
-        // ratio = outbound / max(inbound,1); with no inbound observed it
-        // degenerates into the raw byte count, so cap it rather than print it.
-        ratio: (() => { const r = ev(a, 'outbound_inbound_ratio');
-          return r >= 1000 ? '>1000' : r.toFixed(1); })(),
-        conf: pct(a.confidence),
-      })),
-    };
-  }
-  catch {
-    return { total:rI(8,30), bytes:rI(5e7,5e8),
-      items:Array.from({length:5},()=>({src:rP(SRC),dst:rP(DST),out:rI(5e5,5e7),ratio:rF(3.5,25).toFixed(1),conf:rI(70,96)}))
-    };
-  }
+  const list = await getJSON<BackendAlert[]>('/exfil/anomalies');
+  if (!Array.isArray(list)) throw new ApiError('unexpected /exfil/anomalies shape');
+  const out = (a: BackendAlert) => a.bytes_transferred || ev(a, 'total_bytes_transferred');
+  return {
+    total: list.length,
+    bytes: list.reduce((s, a) => s + out(a), 0),
+    items: list.slice(0, 25).map(a => ({
+      src: a.source_ip,
+      dst: a.destination_ip,
+      out: out(a),
+      ratio: (() => {
+        const r = ev(a, 'outbound_inbound_ratio');
+        return r >= 1000 ? '>1000' : r.toFixed(1);
+      })(),
+      conf: pct(a.confidence),
+    })),
+  };
 }
 
 export async function fetchTraffic() {
-  try {
-    const stats = await getJSON<Record<string, number>>('/traffic/stats');
-    if (!stats || typeof stats.total_flows !== 'number') throw new Error('unexpected /traffic/stats shape');
-
-    // /traffic/stats has no protocol breakdown, so derive it from the alert feed.
-    let protocols: Record<string, number> = { TCP: 100 };
-    let avgDur = 0;
-    try {
-      const alerts = await getJSON<BackendAlert[]>('/threats?limit=500');
-      if (Array.isArray(alerts) && alerts.length) {
-        const counts: Record<string, number> = {};
-        for (const a of alerts) {
-          const p = (a.protocol || 'other').toUpperCase();
-          counts[p] = (counts[p] || 0) + 1;
-        }
-        protocols = Object.fromEntries(
-          Object.entries(counts).map(([p, c]) => [p, Math.round((c / alerts.length) * 100)])
-        );
-        avgDur = avg(alerts.map(a => a.duration_seconds).filter(Number.isFinite));
-      }
-    } catch { /* protocol mix is best-effort; the metric cards still render */ }
-
-    return {
-      flows: stats.total_flows,
-      bytes: stats.total_bytes ?? 0,
-      packets: stats.total_packets ?? 0,
-      avg_dur: avgDur,
-      protocols,
-    };
+  const [stats, ts] = await Promise.all([
+    getJSON<Record<string, number>>('/traffic/stats'),
+    fetchTimeSeries(60, 1).catch(() => null),
+  ]);
+  if (!stats || typeof stats.total_flows !== 'number') {
+    throw new ApiError('unexpected /traffic/stats shape');
   }
-  catch { return {flows:rI(140,220),bytes:rI(8e8,2e9),packets:rI(1e5,9e5),protocols:{TCP:62,UDP:24,DNS:8,TLS:4,QUIC:2},avg_dur:rF(8,45)}; }
+  let avgDur = 0;
+  try {
+    const alerts = await getJSON<BackendAlert[]>('/threats/?limit=500');
+    avgDur = avg(alerts.map(a => a.duration_seconds).filter(Number.isFinite));
+  } catch { /* average duration is supplementary */ }
+
+  return {
+    flows: stats.total_flows,
+    bytes: stats.total_bytes ?? 0,
+    packets: stats.total_packets ?? 0,
+    avg_dur: avgDur,
+    protocols: ts?.protocol_distribution ?? {},
+    series: ts?.series ?? [],
+    seriesEmpty: ts?.window_empty ?? true,
+  };
 }
 
-// ── Report generation ─────────────────────────────────────────────
-// UI labels -> the backend's threat_class / severity vocabulary.
-const REPORT_CLASS: Record<string, string|undefined> = {
+// ── Reports ───────────────────────────────────────────────────────────
+const REPORT_CLASS: Record<string, string | undefined> = {
   'All': undefined, 'DDoS': 'ddos', 'C2 Beaconing': 'c2_beacon', 'DGA': 'dga',
   'DNS Tunnel': 'dns_tunnel', 'TLS Malware': 'tls_malware',
   'Recon': 'port_scan', 'Exfiltration': 'exfiltration',
@@ -358,17 +390,16 @@ export async function generateReport(opts: {
   if (opts.sev && opts.sev !== 'All') params.set('severity', opts.sev.toLowerCase());
 
   const res = await fetch(`${API}/reports/generate?${params}`);
-  if (!res.ok) throw new Error(`Backend returned ${res.status} — is it running on ${API}?`);
+  if (!res.ok) throw new ApiError(`Backend returned ${res.status} — is it running on ${API}?`, res.status);
 
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   const filename = `threx-report-${stamp}.${fmt}`;
 
   if (fmt === 'csv') {
     const text = await res.text();
-    const count = Math.max(0, text.trim().split('\n').length - 1); // minus header
+    const count = Math.max(0, text.trim().split('\n').length - 1);
     return { blob: new Blob([text], { type: 'text/csv' }), filename, count };
   }
-
   const json = await res.json();
   const rows = Array.isArray(json) ? json : (json.data ?? []);
   return {
@@ -378,25 +409,21 @@ export async function generateReport(opts: {
   };
 }
 
-/**
- * Real metrics for the Command Center, assembled from the backend.
- * Previously these headline numbers were generated with Math.random(), which is
- * why "Total Detections" read 1 while the threat distribution summed to 500.
- */
-export async function fetchMetrics(): Promise<Partial<Metric> | null> {
-  try {
-    const [health, stats, alerts] = await Promise.all([
-      getJSON<Record<string, unknown>>('/health'),
-      getJSON<Record<string, number>>('/traffic/stats').catch(() => ({} as Record<string, number>)),
-      getJSON<BackendAlert[]>('/threats?limit=1000').catch(() => [] as BackendAlert[]),
-    ]);
-    const list = Array.isArray(alerts) ? alerts : [];
-    const active = list.filter(a => ['critical', 'high'].includes(String(a.severity).toLowerCase()));
-    return {
-      uptime_seconds: Number(health.uptime_seconds) || 0,
-      total_detections: list.length,
-      active_threats: active.length,
-      throughput_mbps: stats.total_bytes ? +((stats.total_bytes * 8) / 1e6 / 60).toFixed(2) : undefined,
-    };
-  } catch { return null; }
+// ── Headline metrics ──────────────────────────────────────────────────
+export async function fetchMetrics(telemetry?: ThroughputTelemetry): Promise<Partial<Metric>> {
+  // Pass the telemetry you already fetched to avoid a second identical request.
+  const [t, alerts] = await Promise.all([
+    telemetry ? Promise.resolve(telemetry) : fetchTelemetry(),
+    getJSON<BackendAlert[]>('/threats/?limit=1000').catch(() => [] as BackendAlert[]),
+  ]);
+  const active = alerts.filter(a =>
+    ['critical', 'high'].includes(String(a.severity).toLowerCase()));
+  return {
+    uptime_seconds: t.uptime_seconds,
+    total_detections: alerts.length,
+    active_threats: active.length,
+    flows_per_second: t.flows_per_sec,
+    detection_latency_ms: t.latency.p50_ms,
+    throughput_mbps: +((t.bytes_per_sec * 8) / 1e6).toFixed(2),
+  };
 }

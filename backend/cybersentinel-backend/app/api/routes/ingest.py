@@ -70,6 +70,27 @@ async def replay_pcap(payload: dict, alert_manager: Any = Depends(get_alert_mana
     filepath = payload.get("filepath") or payload.get("path") or "data/pcaps/mixed/sample_flow.json"
     if not alert_manager:
         raise HTTPException(status_code=503, detail="Alert manager not ready")
+
+    # The caller-supplied path was previously opened as-is, so "../../etc/passwd"
+    # was readable by anyone who could reach this endpoint. Resolve it and
+    # require that it stay inside the configured PCAP directory.
+    import os
+    from pathlib import Path
+    from app.config import settings
+
+    pcap_root = Path(settings.pcap_dir).resolve()
+    try:
+        candidate = Path(filepath)
+        resolved = (candidate if candidate.is_absolute() else pcap_root / candidate).resolve()
+        resolved.relative_to(pcap_root)
+    except (ValueError, OSError):
+        raise HTTPException(
+            status_code=400,
+            detail=f"filepath must resolve inside {pcap_root}",
+        )
+    if not resolved.is_file():
+        raise HTTPException(status_code=404, detail=f"No such replay file: {filepath}")
+    filepath = str(resolved)
     try:
         from app.api.deps import get_inference_engine, get_alert_broadcaster
         from app.metrics.collector import get_metrics

@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-09-24T04:03:15+00:00",
+  "hardware": {
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logical_cpus": 1,
+    "os": "Linux-6.18.44-fc-v40-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "config": {
+    "workers": 2,
+    "dst_aggregators": 1,
+    "mix": "lab",
+    "offered_rate": 2500.0,
+    "batch": 1024,
+    "measure_seconds": 12.0,
+    "warmup_seconds": 6.0,
+    "transport": "IPFIX over UDP (loopback)",
+    "path": "receiver/splitter -> workers (decode + all detector modules) -> main"
+  },
+  "sustained_flows_per_sec": 2552.2,
+  "latency_ms": {
+    "p50": 199.17,
+    "p95": 384.74,
+    "p99": 453.28,
+    "samples": 30916
+  },
+  "loss": {
+    "exporter_sent": 45213,
+    "received": 45213,
+    "seq_gap_records": 0,
+    "receiver_queue_drops_messages": 0,
+    "received_not_processed": 0
+  },
+  "alerts": {
+    "raw_detections": 4882,
+    "alerts_in": 12098,
+    "alerts_new": 622,
+    "alerts_merged": 11476,
+    "pushed": 523,
+    "push_suppressed": 99,
+    "flows": 45213,
+    "persisted_rows": 622
+  },
+  "target": {
+    "flows_per_sec": 2500.0,
+    "p95_ms": 250.0,
+    "zero_loss": true,
+    "met": false
+  }
+}

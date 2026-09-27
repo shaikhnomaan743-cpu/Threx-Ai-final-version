@@ -86,9 +86,11 @@ class FlowMetrics:
         self._last_reset = time.time()
         self._interval = 1.0  # 1-second reporting interval
 
-        # History
+        # History: per-second aggregates, {epoch_second: {flows,packets,bytes}}
         self._history_size = 60
-        self._flow_history: list = []
+        self._flow_history: list = []  # retained for backwards compatibility
+        self._second_buckets: dict = {}
+        self._retention_seconds = 600
 
         # Thread safety
         self._lock = threading.Lock()
@@ -117,6 +119,20 @@ class FlowMetrics:
         self._total_packets = 0
         self._total_bytes = 0
 
+        # Real latency distribution (milliseconds), bounded ring buffer.
+        self._latency_window: list = []
+        self._latency_window_size = 1000
+        self._total_inferences = 0
+
+        # Queue / loss telemetry, fed by the ingest worker.
+        self._queue_depth = 0
+        self._dropped_flows = 0
+        self._total_alerts = 0
+
+        # Sustained-rate tracking: peak observed 1s rate since boot.
+        self._peak_flows_sec = 0.0
+        self._boot_time = time.time()
+
     def record_flow(self, flow: Any):
         """Record a new flow for metrics tracking.
 
@@ -140,13 +156,26 @@ class FlowMetrics:
             protocol = protocol.lower()
             self._protocol_counts[protocol] = self._protocol_counts.get(protocol, 0) + 1
 
-            self._flow_history.append({
-                "timestamp": now,
-                "packet_count": pkt_cnt,
-                "bytes_transferred": byte_cnt,
-            })
-            if len(self._flow_history) > self._history_size * 2:
-                self._flow_history = self._flow_history[-self._history_size:]
+            # Aggregate into per-second buckets at record time.
+            #
+            # This used to append one dict per flow and trim to the last 120
+            # entries. At a few hundred flows/sec that window covers well under
+            # a second, so a 60-second chart had 59 empty buckets and one
+            # spike — not because the network was idle, but because the history
+            # had already been discarded. Bucketing on write keeps a full
+            # retention window at fixed memory cost.
+            sec = int(now)
+            b = self._second_buckets.get(sec)
+            if b is None:
+                b = {"flows": 0, "packets": 0, "bytes": 0}
+                self._second_buckets[sec] = b
+            b["flows"] += 1
+            b["packets"] += pkt_cnt
+            b["bytes"] += byte_cnt
+            if len(self._second_buckets) > self._retention_seconds * 2:
+                cutoff = sec - self._retention_seconds
+                for k in [k for k in self._second_buckets if k < cutoff]:
+                    del self._second_buckets[k]
 
             if PROMETHEUS_AVAILABLE and self._flows_counter:
                 try:
@@ -158,13 +187,92 @@ class FlowMetrics:
                 except Exception as e:
                     logger.debug(f"Prometheus inc error: {e}")
 
+    def record_flows_bulk(self, n: int, packets: int, byte_count: int):
+        """Multi-core path: one call per worker batch instead of per flow
+        (per-flow bookkeeping in the main process would re-create the very
+        bottleneck the workers remove). Same counters and 1 s buckets."""
+        if n <= 0:
+            return
+        now = time.time()
+        with self._lock:
+            self._flows_per_sec += n
+            self._packets_per_sec += packets
+            self._bytes_per_sec += byte_count
+            self._total_flows += n
+            self._total_packets += packets
+            self._total_bytes += byte_count
+            sec = int(now)
+            b = self._second_buckets.get(sec)
+            if b is None:
+                b = {"flows": 0, "packets": 0, "bytes": 0}
+                self._second_buckets[sec] = b
+            b["flows"] += n
+            b["packets"] += packets
+            b["bytes"] += byte_count
+            if len(self._second_buckets) > self._retention_seconds * 2:
+                cutoff = sec - self._retention_seconds
+                for k in [k for k in self._second_buckets if k < cutoff]:
+                    del self._second_buckets[k]
+        if PROMETHEUS_AVAILABLE and self._flows_counter:
+            try:
+                self._flows_counter.inc(n)
+                if self._packets_counter:
+                    self._packets_counter.inc(packets)
+                if self._bytes_counter:
+                    self._bytes_counter.inc(byte_count)
+            except Exception:
+                pass
+
+    def record_latency_samples_ms(self, samples_ms):
+        """Bulk latency samples (ms) into the same p50/p95/p99 window."""
+        if not samples_ms:
+            return
+        with self._lock:
+            self._latency_window.extend(float(x) for x in samples_ms)
+            if len(self._latency_window) > self._latency_window_size * 2:
+                self._latency_window = self._latency_window[-self._latency_window_size:]
+            self._total_inferences += len(samples_ms)
+
     def record_inference_latency(self, latency_seconds: float):
-        """Record inference engine latency."""
+        """Record inference engine latency.
+
+        Latencies are also kept in a bounded in-process window so p50/p95/p99
+        can be served from /metrics/throughput. Previously this only fed a
+        Prometheus histogram and get_latency_stats() returned the string
+        "Use prometheus endpoint for latency metrics" — the dashboard had no
+        real latency source at all and showed a hardcoded number instead.
+        """
+        with self._lock:
+            self._latency_window.append(float(latency_seconds) * 1000.0)
+            if len(self._latency_window) > self._latency_window_size * 2:
+                self._latency_window = self._latency_window[-self._latency_window_size:]
+            self._total_inferences += 1
         if PROMETHEUS_AVAILABLE and self._inference_latency:
             try:
                 self._inference_latency.observe(latency_seconds)
             except Exception:
                 pass
+
+    def record_drop(self, n: int = 1):
+        """Record flows dropped because the ingest queue was full."""
+        with self._lock:
+            self._dropped_flows += n
+
+    def set_queue_depth(self, depth: int):
+        with self._lock:
+            self._queue_depth = int(depth)
+
+    def record_alert(self, n: int = 1):
+        with self._lock:
+            self._total_alerts += n
+
+    @staticmethod
+    def _percentile(sorted_vals: list, q: float) -> float:
+        """Nearest-rank percentile. Returns 0.0 on an empty window."""
+        if not sorted_vals:
+            return 0.0
+        k = max(0, min(len(sorted_vals) - 1, int(round(q * (len(sorted_vals) - 1)))))
+        return round(sorted_vals[k], 3)
 
     def get_throughput_stats(self) -> Dict[str, Any]:
         """Get current throughput statistics."""
@@ -180,6 +288,8 @@ class FlowMetrics:
                 self._last_flows_sec = round(flows_sec, 2)
                 self._last_packets_sec = round(packets_sec, 2)
                 self._last_bytes_sec = round(bytes_sec, 2)
+                if self._last_flows_sec > self._peak_flows_sec:
+                    self._peak_flows_sec = self._last_flows_sec
                 # Reset counters for next interval
                 self._flows_per_sec = 0.0
                 self._packets_per_sec = 0.0
@@ -215,14 +325,92 @@ class FlowMetrics:
                 "total_flows": self._total_flows,
                 "total_packets": self._total_packets,
                 "total_bytes": self._total_bytes,
-                "timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+                "peak_flows_per_sec": round(self._peak_flows_sec, 2),
+                "uptime_seconds": round(now - self._boot_time, 2),
+                "timestamp": __import__("datetime").datetime.now(
+                    __import__("datetime").timezone.utc
+                ).isoformat().replace("+00:00", "Z"),
             }
 
     def get_latency_stats(self) -> Dict[str, Any]:
-        """Get inference latency statistics."""
-        if not PROMETHEUS_AVAILABLE:
-            return {"note": "Prometheus not installed for latency tracking."}
-        return {"note": "Use prometheus endpoint for latency metrics"}
+        """Real inference-latency distribution over the recent window, in ms."""
+        with self._lock:
+            vals = sorted(self._latency_window[-self._latency_window_size:])
+            total = self._total_inferences
+        if not vals:
+            return {
+                "samples": 0, "total_inferences": total,
+                "p50_ms": 0.0, "p95_ms": 0.0, "p99_ms": 0.0,
+                "min_ms": 0.0, "max_ms": 0.0, "mean_ms": 0.0,
+            }
+        return {
+            "samples": len(vals),
+            "total_inferences": total,
+            "p50_ms": self._percentile(vals, 0.50),
+            "p95_ms": self._percentile(vals, 0.95),
+            "p99_ms": self._percentile(vals, 0.99),
+            "min_ms": round(vals[0], 3),
+            "max_ms": round(vals[-1], 3),
+            "mean_ms": round(sum(vals) / len(vals), 3),
+        }
+
+    def get_resource_stats(self) -> Dict[str, Any]:
+        """Real process CPU/memory. Reports availability rather than inventing
+        numbers when psutil is absent, so the UI can show 'unavailable'
+        instead of a plausible-looking fake."""
+        try:
+            import psutil  # type: ignore
+        except ImportError:
+            return {"available": False, "reason": "psutil not installed"}
+        try:
+            proc = psutil.Process()
+            with proc.oneshot():
+                mem = proc.memory_info()
+                cpu = proc.cpu_percent(interval=None)
+            vm = psutil.virtual_memory()
+            return {
+                "available": True,
+                "cpu_percent": round(float(cpu), 2),
+                "memory_rss_mb": round(mem.rss / (1024 * 1024), 2),
+                "memory_percent": round(float(proc.memory_percent()), 2),
+                "system_memory_percent": round(float(vm.percent), 2),
+                "num_threads": proc.num_threads(),
+            }
+        except Exception as e:  # pragma: no cover - platform dependent
+            return {"available": False, "reason": str(e)}
+
+    def get_queue_stats(self) -> Dict[str, Any]:
+        with self._lock:
+            return {
+                "queue_depth": self._queue_depth,
+                "dropped_flows": self._dropped_flows,
+                "total_alerts": self._total_alerts,
+            }
+
+    def get_flow_history(self, buckets: int = 60, bucket_seconds: int = 1) -> list:
+        """Aggregate observed traffic into fixed time buckets, oldest first.
+
+        Reads the per-second aggregates recorded by record_flow(). Buckets with
+        no traffic are returned as zeros, so a genuinely quiet period looks
+        quiet instead of being interpolated over.
+        """
+        now = int(time.time())
+        with self._lock:
+            src = dict(self._second_buckets)
+        out = []
+        for i in range(buckets):
+            # bucket i covers [start, start+bucket_seconds)
+            end_off = (buckets - i) * bucket_seconds
+            start_sec = now - end_off
+            agg = {"offset_s": -end_off, "flows": 0, "packets": 0, "bytes": 0}
+            for s_i in range(start_sec, start_sec + bucket_seconds):
+                b = src.get(s_i)
+                if b:
+                    agg["flows"] += b["flows"]
+                    agg["packets"] += b["packets"]
+                    agg["bytes"] += b["bytes"]
+            out.append(agg)
+        return out
 
     def prometheus_text(self) -> bytes:
         """Generate prometheus text format including flow counts fallback."""

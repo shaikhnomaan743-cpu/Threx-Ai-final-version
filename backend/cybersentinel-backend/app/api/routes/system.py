@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from typing import Any
 import time
 import os
-from app.api.deps import get_alert_manager
+from app.api.deps import get_alert_manager, engine_ready, get_engine_error
 from app.config import settings
 
 router = APIRouter(prefix="/system", tags=["system"])
@@ -16,18 +16,25 @@ def _uptime_seconds() -> float:
 
 
 def _base_health(alert_manager: Any = None) -> dict:
-    return {
-        "status": "operational" if alert_manager else "initializing",
+    # `inference` must reflect the engine, not the alert manager. Reporting it
+    # from alert_manager meant a dead engine still showed "ready".
+    eng_ok = engine_ready()
+    payload = {
+        "status": ("operational" if eng_ok else "degraded") if alert_manager else "initializing",
         "version": settings.version,
         "uptime_seconds": _uptime_seconds(),
+        "detection_active": eng_ok,
         "components": {
             "ingest": "idle" if not _is_live_enabled() else "live",
-            "inference": "ready" if alert_manager else "loading",
+            "inference": "ready" if eng_ok else "UNAVAILABLE",
             "alerting": "active" if alert_manager else "initializing",
             "websocket": "active",
             "database": "connected",
         },
     }
+    if not eng_ok:
+        payload["degraded_reason"] = get_engine_error() or "inference engine not initialised"
+    return payload
 
 
 def _is_live_enabled() -> bool:
@@ -36,30 +43,37 @@ def _is_live_enabled() -> bool:
 
 @router.get("/status", summary="Pipeline health status")
 async def get_system_status(alert_manager: Any = Depends(get_alert_manager)):
-    return {
-        "status": "operational" if alert_manager else "initializing",
-        "components": {
-            "ingest": "live" if _is_live_enabled() else "idle (passive mode)",
-            "inference": "ready" if alert_manager else "loading",
-            "alerting": "active" if alert_manager else "initializing",
-            "websocket": "active",
-            "database": "connected",
-        },
-        "version": settings.version,
-        "uptime_seconds": _uptime_seconds(),
-    }
+    data = _base_health(alert_manager)
+    data["components"]["ingest"] = "live" if _is_live_enabled() else "idle (passive mode)"
+    return data
 
 
 @router.get("/throughput", summary="Throughput metrics")
 async def get_throughput(alert_manager: Any = Depends(get_alert_manager)):
-    if not alert_manager:
-        return {"flows_per_second": 0, "alerts_per_minute": 0, "bytes_per_second": 0}
-    alerts = alert_manager.get_active_alerts()
+    """Real measured throughput.
+
+    This previously returned `flows_per_second = len(alerts) * 0.5` and
+    `alerts_per_minute = len(alerts) * 2` — arithmetic on the size of the alert
+    table, not a measurement of anything. It now reads the same FlowMetrics
+    counters as /api/v1/metrics/throughput, so every surface quotes one number.
+    """
+    from app.metrics.collector import get_metrics
+    m = get_metrics()
+    tp = m.get_throughput_stats()
+    lat = m.get_latency_stats()
+    q = m.get_queue_stats()
     return {
-        "flows_per_second": len(alerts) * 0.5,
-        "alerts_per_minute": len(alerts) * 2,
-        "bytes_per_second": sum(a.bytes_transferred for a in alerts) // max(len(alerts), 1),
-        "total_alerts": len(alerts),
+        "flows_per_second": tp.get("flows_per_sec", 0.0),
+        "peak_flows_per_second": tp.get("peak_flows_per_sec", 0.0),
+        "packets_per_second": tp.get("packets_per_sec", 0.0),
+        "bytes_per_second": tp.get("bytes_per_sec", 0.0),
+        "p50_latency_ms": lat.get("p50_ms", 0.0),
+        "p95_latency_ms": lat.get("p95_ms", 0.0),
+        "p99_latency_ms": lat.get("p99_ms", 0.0),
+        "dropped_flows": q.get("dropped_flows", 0),
+        "queue_depth": q.get("queue_depth", 0),
+        "total_flows": tp.get("total_flows", 0),
+        "total_alerts": len(alert_manager.get_active_alerts()) if alert_manager else 0,
     }
 
 
@@ -84,10 +98,10 @@ async def health_ready(alert_manager: Any = Depends(get_alert_manager)):
     """Readiness: returns 200 only if alert_manager & inference are ready."""
     ready = alert_manager is not None
     data = _base_health(alert_manager)
-    data["ready"] = ready
+    data["ready"] = ready and engine_ready()
     data["endpoint"] = "/system/health/ready"
     # Still return 200 with status field so k8s can parse; include ready flag
-    data["status"] = "ready" if ready else "initializing"
+    data["status"] = "ready" if (ready and engine_ready()) else ("degraded" if ready else "initializing")
     return data
 
 

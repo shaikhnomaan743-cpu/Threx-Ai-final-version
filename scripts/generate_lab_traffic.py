@@ -172,6 +172,65 @@ def generate_slowloris(n=10):
     return flows
 
 
+def generate_slowloris_tool(n=150, attackers=2, target=None):
+    """Slowloris as the real tool behaves (PS dataset list): a few attacker
+    hosts each hold many sockets open AT THE SAME TIME to one web server and
+    send a partial header line every ~10-15 s to keep them alive (tool
+    default: 150 sockets, 15 s sleep). Not called by main(), so the committed
+    data/pcaps files are unchanged; used by scripts/evaluate_detectors.py.
+    """
+    flows = []
+    base = time.time() - 900
+    dst = target or random.choice(DST_IPS)
+    srcs = [f"198.51.100.{random.randint(10, 200)}" for _ in range(attackers)]
+    for i in range(n):
+        src = srcs[i % attackers]
+        sport = random.randint(49152, 65535)
+        ts = base + random.uniform(0.0, 5.0)          # sockets opened in a burst
+        dur = round(random.uniform(150.0, 400.0), 2)
+        interval = random.uniform(10.0, 15.0)
+        times = [ts]
+        while times[-1] + interval < ts + dur:
+            times.append(times[-1] + interval + random.uniform(-1.0, 1.0))
+        sizes = [random.randint(60, 90) for _ in times]
+        flows.append({
+            "flow_id": _flow_id(src, sport, dst, 80, "tcp"),
+            "src_ip": src, "dst_ip": dst, "src_port": sport, "dst_port": 80, "protocol": "tcp",
+            "packet_count": len(times), "bytes_transferred": sum(sizes),
+            "duration_seconds": round(times[-1] - ts, 2), "start_time": ts, "end_time": times[-1],
+            "timestamps": times[:50], "packet_sizes": sizes[:50],
+            "raw_features": {}, "flags": ["SYN", "PSH", "ACK"],
+        })
+    return flows
+
+
+def generate_benign_keepalive(n=300, target=None):
+    """Hard negative for slow-rate detection: many clients holding idle HTTP
+    keep-alive connections to one busy server. Long, slow and small like
+    Slowloris, but bursty-then-silent rather than a steady trickle."""
+    flows = []
+    base = time.time() - 900
+    dst = target or random.choice(DST_IPS)
+    for i in range(n):
+        src = f"192.0.2.{random.randint(1, 250)}"
+        sport = random.randint(49152, 65535)
+        ts = base + random.uniform(0.0, 30.0)
+        burst = random.randint(4, 9)                  # request + response ACKs
+        times = [ts + j * random.uniform(0.01, 0.2) for j in range(burst)]
+        idle = random.uniform(60.0, 120.0)           # keep-alive idle, then FIN
+        times.append(times[-1] + idle)
+        sizes = [random.randint(60, 400) for _ in times]
+        flows.append({
+            "flow_id": _flow_id(src, sport, dst, 443, "tcp"),
+            "src_ip": src, "dst_ip": dst, "src_port": sport, "dst_port": 443, "protocol": "tcp",
+            "packet_count": len(times), "bytes_transferred": sum(sizes),
+            "duration_seconds": round(times[-1] - ts, 2), "start_time": ts, "end_time": times[-1],
+            "timestamps": times, "packet_sizes": sizes,
+            "raw_features": {}, "flags": ["SYN", "ACK", "PSH", "FIN"],
+        })
+    return flows
+
+
 def generate_dns_tunneling(n=15):
     """DNS tunneling: high query rate, large TXT responses, unusual subdomain entropy."""
     flows = []

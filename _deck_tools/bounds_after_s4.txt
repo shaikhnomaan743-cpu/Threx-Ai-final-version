@@ -1,0 +1,31 @@
+﻿slide=4 slideWidth=960 slideHeight=540
+attop=   10.57 atleft=   38.60 w=  714.93 h=   50.15 | boundTop=   23.52 boundH=      36 boundL=    39.6 boundW=   329.9 | object 2 :: Feasibility and Viability
+attop=   20.87 atleft=  837.70 w=   81.75 h=   38.17 | boundTop=       0 boundH=       0 boundL=       0 boundW=       0 | object 3 :: 
+attop=   74.70 atleft=   38.60 w=  192.90 h=   13.55 | boundTop=    75.8 boundH=    11.4 boundL=    39.6 boundW=  190.49 | object 4 :: R I S K S, AND WHAT WE DO ABOUT E ACH
+attop=   96.24 atleft=   39.36 w=  504.00 h=   94.35 | boundTop=    96.6 boundH=    21.6 boundL=   39.72 boundW=       5 | object 5 :: 
+attop=  106.21 atleft=   54.46 w=  263.85 h=   15.25 | boundTop=  107.26 boundH=    13.2 boundL=   55.46 boundW=   261.3 | object 8 :: Risk 1. Real diode traffic needs clearance we do not have
+attop=  135.58 atleft=   54.46 w=  471.75 h=   38.55 | boundTop=  135.93 boundH=   36.36 boundL=   55.46 boundW=  465.84 | object 9 :: Mitigation. We build on the sources the statement itself names: hping3, Slowloris, dnscat2
+attop=   73.20 atleft=  572.16 w=  348.50 h=  120.76 | boundTop=   73.56 boundH=    21.6 boundL=  572.52 boundW=       5 | object 26 :: 
+attop=   81.97 atleft=  587.38 w=  157.55 h=   17.60 | boundTop=   82.92 boundH=    15.6 boundL=  588.38 boundW=  156.75 | object 29 :: Feasibility: it already runs
+attop=  140.14 atleft=  587.38 w=    6.95 h=   13.85 | boundTop=  141.44 boundH=    11.4 boundL=  588.38 boundW=    6.38 | object 30 :: •
+attop=  110.41 atleft=  587.38 w=  289.50 h=   56.69 | boundTop=  111.31 boundH=   78.68 boundL=  587.38 boundW=  290.13 | object 31 :: Prototype deployed: live SOC dashboard, WebSocket feed, report generator. Software-only on
+attop=  197.04 atleft=   39.36 w=  504.00 h=   94.35 | boundTop=   197.4 boundH=    21.6 boundL=   39.72 boundW=       5 | object 10 :: 
+attop=  207.06 atleft=   54.46 w=  260.10 h=   15.25 | boundTop=  208.11 boundH=    13.2 boundL=   55.46 boundW=  257.84 | object 13 :: Risk 2. C2 beacon precision is 0.30, our weakest number
+attop=  242.60 atleft=   54.46 w=  468.80 h=   26.10 | boundTop=  243.05 boundH=   24.05 boundL=   55.46 boundW=  460.74 | object 14 :: Mitigation. Scoring periodicity without destination context made NTP and ordinary telemetr
+attop=  297.84 atleft=   39.36 w=  504.00 h=   94.35 | boundTop=   298.2 boundH=    21.6 boundL=   39.72 boundW=       5 | object 15 :: 
+attop=  307.90 atleft=   54.46 w=  222.85 h=   15.25 | boundTop=   308.9 boundH=    13.2 boundL=   55.46 boundW=  220.55 | object 18 :: Risk 3. Accuracy drifts as traffic patterns change
+attop=  201.85 atleft=  572.16 w=  348.50 h=  143.30 | boundTop=  202.21 boundH=    21.6 boundL=  572.52 boundW=       5 | object 32 :: 
+attop=  211.39 atleft=  587.38 w=  156.60 h=   17.60 | boundTop=  212.34 boundH=    15.6 boundL=  588.38 boundW=   155.8 | object 35 :: All five PS constraints met
+attop=  262.17 atleft=  608.98 w=  138.60 h=   14.10 | boundTop=  263.22 boundH=      12 boundL=  609.98 boundW=  136.45 | object 36 :: (b) No decryption metadata only
+attop=  240.89 atleft=  588.82 w=  300.00 h=  100.80 | boundTop=  241.99 boundH=     103 boundL=  588.82 boundW=  261.63 | object 37 :: (a) Read-only ingest no send() path exists | ✓ | (c) Streaming p50 1.54 ms while serving |
+attop=  326.99 atleft=  608.98 w=  161.80 h=   14.10 | boundTop=  328.04 boundH=      12 boundL=  609.98 boundW=  159.52 | object 38 :: (e) Alert schema 17 fields incl. severity
+attop=  356.11 atleft=  571.54 w=   84.65 h=   13.55 | boundTop=  357.21 boundH=    11.4 boundL=  572.54 boundW=   83.09 | object 39 :: R UNNI NG T ODAY
+attop=  343.45 atleft=   54.46 w=  439.60 h=   26.10 | boundTop=   344.8 boundH=    23.8 boundL=   55.46 boundW=  434.78 | object 19 :: Mitigation. Detectors are independent, so one can be retrained in isolation. Every metric 
+attop=  400.08 atleft=   39.36 w=  504.00 h=  100.79 | boundTop=  400.54 boundH=    21.6 boundL=   39.72 boundW=       5 | object 20 :: 
+attop=  408.87 atleft=   54.46 w=  233.65 h=   16.40 | boundTop=  409.87 boundH=    14.4 boundL=   55.46 boundW=  231.48 | object 23 :: Weaknesses we found ourselves, and fixed
+attop=  374.89 atleft=  572.40 w=  168.48 h=   87.84 | boundTop=       0 boundH=       0 boundL=       0 boundW=       0 | object 40 :: 
+attop=  374.89 atleft=  751.68 w=  168.48 h=   87.84 | boundTop=       0 boundH=       0 boundL=       0 boundW=       0 | object 41 :: 
+attop=  457.21 atleft=   54.46 w=    6.80 h=   13.55 | boundTop=  458.31 boundH=    11.4 boundL=   55.46 boundW=    6.38 | object 24 :: •
+attop=  431.00 atleft=   54.46 w=  449.05 h=   70.87 | boundTop=   432.1 boundH=    67.2 boundL=   54.46 boundW=  447.75 | object 25 :: DGA scored AUC 1.00 on our first corpus — domain length alone separated the classes. Rebui
+attop=  472.75 atleft=  571.54 w=  336.05 h=   29.92 | boundTop=   474.1 boundH=    30.6 boundL=  571.54 boundW=  327.25 | object 42 :: Not built yet: JA4 fingerprints, QUIC — named in the PS, still roadmap only. | Some dashbo
+attop=  510.92 atleft=   38.60 w=  148.55 h=   11.15 | boundTop=  510.92 boundH=      10 boundL=    39.6 boundW=     146 | object 43 :: SIH26145 · NTRO · Caffeinated Coders

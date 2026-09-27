@@ -17,8 +17,16 @@ from app.alerts.schema import Alert, Evidence
 from app.alerts.manager import AlertManager
 from app.alerts.broadcaster import AlertBroadcaster
 from app.db.session import init_db_session, close_db_session
-from app.api.deps import set_alert_manager, set_inference_engine, set_alert_broadcaster, get_alert_manager
-from app.api.routes import threats, traffic, dns, tls, recon, exfil, system, reports, websocket, ingest
+from app.api.deps import (
+    set_alert_manager,
+    set_inference_engine,
+    set_alert_broadcaster,
+    get_alert_manager,
+    set_engine_error,
+    get_engine_error,
+    engine_ready,
+)
+from app.api.routes import threats, traffic, dns, tls, recon, exfil, system, reports, websocket, ingest, metrics_v1
 
 # Uptime at module load
 _APP_START_TIME = __import__("time").time()
@@ -147,7 +155,14 @@ async def lifespan(app: FastAPI):
     alert_broadcaster = AlertBroadcaster()
     set_alert_manager(alert_manager)
     set_alert_broadcaster(alert_broadcaster)
-    # Initialize ML inference engine (loads artifacts)
+    # Initialize ML inference engine (loads artifacts).
+    #
+    # This used to swallow the exception and let the app serve pre-seeded rows
+    # as if detection were running. A missing dependency therefore looked
+    # identical to a quiet network. Now the failure is recorded in deps (so
+    # /health reports degraded and inference-backed endpoints return 503) and,
+    # unless explicitly allowed, it aborts startup instead of booting a server
+    # that cannot detect anything.
     try:
         from app.inference.engine import InferenceEngine
         inference_engine = InferenceEngine()
@@ -155,14 +170,22 @@ async def lifespan(app: FastAPI):
         set_inference_engine(inference_engine)
         logger.info("Inference engine initialized with trained models")
     except Exception as e:
-        # Use .exception (not .warning) so the traceback lands in the logs.
-        # Previously this printed only "warmup failed: <message>" with no
-        # traceback, so the actual cause (a missing native library) was
-        # invisible — the only visible symptom was analyze_flow() being
-        # called on a None engine, hundreds of times, in a different module.
-        logger.exception(f"Inference engine warmup failed (seeded alerts still available): {e}")
+        inference_engine = None
+        cause = f"{type(e).__name__}: {e}"
+        logger.exception("FATAL: inference engine failed to initialise — %s", cause)
+        set_engine_error(cause)
+        if not settings.allow_degraded_start:
+            raise RuntimeError(
+                "Inference engine failed to initialise and "
+                "CYBERSENTINEL_ALLOW_DEGRADED_START is false. Refusing to start a "
+                f"backend that cannot detect threats. Cause: {cause}"
+            ) from e
+        logger.error(
+            "Continuing in DEGRADED mode because CYBERSENTINEL_ALLOW_DEGRADED_START=true. "
+            "Detection is OFF; inference-backed endpoints will return 503."
+        )
     _seed_alerts(alert_manager)
-    logger.info("Backend initialized and seeded successfully — DATA MODE: BACKEND SEEDED (see /system/status)")
+    logger.info("Backend initialized — DATA MODE: %s", "LIVE_INFERENCE" if inference_engine else "DEGRADED_NO_ENGINE")
     # Start ingest pipeline (passive, background)
     try:
         from app.ingest.pipeline import start_background_ingest
@@ -176,6 +199,11 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down...")
     try:
+        from app.ingest.pipeline import stop_ingest_worker
+        await stop_ingest_worker()
+    except Exception as e:
+        logger.debug("ingest worker shutdown: %s", e)
+    try:
         t = globals().get('_ingest_task')
         if t and not t.done():
             t.cancel()
@@ -185,6 +213,12 @@ async def lifespan(app: FastAPI):
                 pass
     except Exception:
         pass
+    try:
+        # Commit any alerts still queued in the background writer.
+        from app.alerts.writer import get_alert_writer
+        await asyncio.get_running_loop().run_in_executor(None, get_alert_writer().flush, 5.0)
+    except Exception as e:
+        logger.debug("alert writer flush on shutdown: %s", e)
     try:
         await close_db_session()
     except Exception:
@@ -226,10 +260,11 @@ def create_app() -> FastAPI:
     _rl_store: dict = {}
     _RL_WINDOW = 60
 
-    @app.middleware("http")
-    async def security_headers_and_ratelimit(request: Request, call_next):
-        # Security headers
-        response = await call_next(request)
+    # Health/liveness probes are never rate limited: throttling them makes the
+    # dashboard (and Docker's healthcheck) conclude the backend is down.
+    _RL_EXEMPT_PREFIXES = ("/health", "/api/health")
+
+    def _apply_security_headers(request: Request, response):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "0"
@@ -237,23 +272,30 @@ def create_app() -> FastAPI:
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         if settings.env == "production":
             response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
-        # Request ID
-        rid = request.headers.get("X-Request-Id") or str(uuid.uuid4())
-        response.headers["X-Request-Id"] = rid
-        # Simple rate limit (per IP, per minute)
+        response.headers["X-Request-Id"] = request.headers.get("X-Request-Id") or str(uuid.uuid4())
+        return response
+
+    @app.middleware("http")
+    async def security_headers_and_ratelimit(request: Request, call_next):
+        # Checks run BEFORE the handler. Previously call_next() ran first, so a
+        # "rejected" request had already executed in full and the 429 only
+        # replaced its response — the limiter blocked the UI but saved no work.
+        # Rate limit (per IP, fixed 60s window). Rejected requests are not counted.
         try:
-            limit = int(getattr(settings, "rate_limit_per_minute", 120))
-            if limit > 0:
+            limit = int(getattr(settings, "rate_limit_per_minute", 600))
+            if limit > 0 and not request.url.path.startswith(_RL_EXEMPT_PREFIXES):
                 ip = request.client.host if request.client else "unknown"
                 now = _rl_time.time()
                 window_key = f"{ip}:{int(now // _RL_WINDOW)}"
-                # prune old windows
                 for k in list(_rl_store.keys()):
                     if _rl_store[k][1] < now - _RL_WINDOW:
                         _rl_store.pop(k, None)
                 cnt, _ = _rl_store.get(window_key, (0, now))
                 if cnt >= limit:
-                    return JSONResponse(status_code=429, content={"detail": "Too Many Requests", "retry_after": _RL_WINDOW})
+                    retry = int(_RL_WINDOW - (now % _RL_WINDOW)) + 1
+                    resp = JSONResponse(status_code=429, content={"detail": "Too Many Requests", "retry_after": retry},
+                                        headers={"Retry-After": str(retry)})
+                    return _apply_security_headers(request, resp)
                 _rl_store[window_key] = (cnt + 1, now)
         except Exception:
             pass
@@ -265,10 +307,11 @@ def create_app() -> FastAPI:
                 if not request.url.path.startswith(("/health", "/metrics", "/docs", "/openapi", "/redoc")):
                     provided = request.headers.get("X-API-Key") or request.query_params.get("api_key")
                     if provided != api_key:
-                        return JSONResponse(status_code=401, content={"detail": "Invalid API key"})
+                        return _apply_security_headers(request, JSONResponse(status_code=401, content={"detail": "Invalid API key"}))
         except Exception:
             pass
-        return response
+        response = await call_next(request)
+        return _apply_security_headers(request, response)
 
     app.include_router(threats.router)
     app.include_router(traffic.router)
@@ -280,6 +323,7 @@ def create_app() -> FastAPI:
     app.include_router(reports.router)
     app.include_router(websocket.router)
     app.include_router(ingest.router)
+    app.include_router(metrics_v1.router)
 
     # ---- Global health aliases (for Dockerfile HEALTHCHECK & probes) ----
     import time as _time
@@ -293,25 +337,38 @@ def create_app() -> FastAPI:
             am = alert_manager
         uptime = round(_time.time() - _APP_START_TIME, 2)
         live = bool(__import__("os").environ.get("CYBERSENTINEL_LIVE_INTERFACE") or getattr(settings, "live_interface", None))
+        # `inference` used to be reported from the alert manager, so a dead
+        # engine still showed "ready" — the exact reason a missing pandas went
+        # unnoticed. It now reflects the engine itself.
+        eng_ok = engine_ready()
+        eng_err = get_engine_error()
+
         status = "operational" if am else "initializing"
+        if not eng_ok:
+            status = "degraded"
         if ready is True:
-            status = "ready" if am else "initializing"
+            status = "ready" if (am and eng_ok) else ("degraded" if am else "initializing")
         elif ready is False:
             status = "alive"
-        return {
+
+        payload = {
             "status": status,
             "version": settings.version,
             "uptime_seconds": uptime,
             "uptime": f"{uptime}s",
             "live_mode": "live" if live else "passive",
+            "detection_active": eng_ok,
             "components": {
                 "ingest": "live" if live else "passive (idle)",
-                "inference": "ready" if am else "loading",
+                "inference": "ready" if eng_ok else "UNAVAILABLE",
                 "alerting": "active" if am else "initializing",
                 "websocket": "active",
                 "database": "connected",
             },
         }
+        if not eng_ok:
+            payload["degraded_reason"] = eng_err or "inference engine not initialised"
+        return payload
 
     @app.get("/health", tags=["system"], summary="Health (root alias)")
     async def health_root():

@@ -8,10 +8,23 @@ from sklearn.preprocessing import StandardScaler
 
 from app.config import settings
 from app.alerts.schema import Evidence
-from app.features.exfil_features import compute_outbound_inbound_ratio, compute_session_duration_stats, compute_byte_skew
+from app.features.exfil_features import compute_one_sided_exfil_features
 
 
 class ExfiltrationDetector:
+    """Data exfiltration detector — PS item (f).
+
+    Reads outbound volume and packet-size profile: both observable from the
+    outbound direction alone. This used to compute an "outbound_inbound_ratio"
+    and "byte_skew" from inbound_bytes, which is never populated on a
+    unidirectional tap and defaulted to 0 — making the displayed ratio
+    numerically equal to raw outbound bytes and the skew always exactly 1.0.
+    Functionally the detector still worked (the effective rule reduced to
+    "large outbound volume"), but the evidence it showed analysts claimed
+    bidirectional visibility the system does not have, which is exactly the
+    kind of number this project's own audit exists to catch.
+    """
+
     def __init__(self, contamination: float = 0.05):
         self.contamination = contamination
         self.iforest = IsolationForest(contamination=contamination, random_state=42, n_estimators=100)
@@ -30,10 +43,8 @@ class ExfiltrationDetector:
         try:
             if len(self._flow_history) < 20:
                 return
-            X = []
-            for fh in self._flow_history:
-                vec = [fh.get("outbound_bytes",0), fh.get("inbound_bytes",0), fh.get("ratio",0.0), fh.get("duration_seconds",0.0), fh.get("byte_skew",0.0), fh.get("throughput_bytes_sec",0.0)]
-                X.append(vec)
+            X = [[fh.get("outbound_bytes_abs", 0), fh.get("bytes_per_packet", 0.0),
+                  fh.get("throughput_bytes_sec", 0.0)] for fh in self._flow_history]
             X = np.array(X, dtype=float)
             X_scaled = self.scaler.fit_transform(X)
             self.iforest.fit(X_scaled)
@@ -41,58 +52,99 @@ class ExfiltrationDetector:
         except Exception:
             pass
 
+    @staticmethod
+    def _extract(flow: Any) -> dict:
+        outbound_bytes = getattr(flow, "bytes_transferred", 0) or 0
+        packet_count = getattr(flow, "packet_count", 0) or 0
+        dur = flow.duration_seconds() if hasattr(flow, "duration_seconds") else 1.0
+        return compute_one_sided_exfil_features(outbound_bytes, packet_count, max(dur, 1.0))
+
+    def _severity(self, total_bytes: float) -> str:
+        if total_bytes > 100 * 1024 * 1024:
+            return "critical"
+        if total_bytes > 10 * 1024 * 1024:
+            return "high"
+        if total_bytes > 1 * 1024 * 1024:
+            return "medium"
+        return "low"
+
+    def _alert(self, feats: dict, rule_based: bool, ml_based: bool, anomaly_score: Optional[float]) -> Optional[dict]:
+        if not (rule_based or ml_based):
+            return None
+        if rule_based and ml_based:
+            confidence = 0.9
+        elif rule_based:
+            confidence = 0.82
+        else:
+            confidence = min(1.0, abs(anomaly_score) * 2) if anomaly_score is not None else 0.0
+        out_bytes = feats["outbound_bytes_abs"]
+        evidence = [
+            Evidence(feature_name="outbound_bytes_abs", value=round(out_bytes, 0), contribution=0.45,
+                     description=f"Outbound volume observed: {out_bytes / 1024:.0f} KB (no inbound side to compare on this link)"),
+            Evidence(feature_name="bytes_per_packet", value=round(feats["bytes_per_packet"], 1), contribution=0.35,
+                     description=f"Average packet size {feats['bytes_per_packet']:.0f} B — large packets suggest bulk transfer"),
+            Evidence(feature_name="throughput_bytes_sec", value=round(feats["throughput_bytes_sec"], 2), contribution=0.20,
+                     description=f"Sustained throughput: {feats['throughput_bytes_sec']:.0f} B/s"),
+        ]
+        return {
+            "threat_class": "exfiltration",
+            "severity": self._severity(out_bytes),
+            "confidence": round(confidence, 4),
+            "evidence": evidence,
+            "model_version": "one_sided_exfil_v2",
+        }
+
     def detect(self, flow: Any) -> Optional[dict]:
         try:
-            outbound_bytes = flow.raw_features.get("outbound_bytes", 0) if hasattr(flow, 'raw_features') else 0
-            inbound_bytes = flow.raw_features.get("inbound_bytes", 0) if hasattr(flow, 'raw_features') else 0
-            # fallback to bytes_transferred if directional not set
-            if outbound_bytes == 0 and inbound_bytes == 0 and hasattr(flow, "bytes_transferred"):
-                outbound_bytes = flow.bytes_transferred
-            ratio_info = compute_outbound_inbound_ratio(outbound_bytes, inbound_bytes)
-            duration_info = compute_session_duration_stats(flow)
-            skew = compute_byte_skew(outbound_bytes, inbound_bytes)
-            total_bytes = outbound_bytes + inbound_bytes
-            rule_based = (ratio_info["exfil_likely"] or (duration_info["is_long_duration"] and duration_info["throughput_bytes_sec"] < 10_000 and total_bytes > 1_000_000))
+            feats = self._extract(flow)
+            rule_based = bool(feats["exfil_likely"])
             ml_based = False
-            confidence = 0.0
+            score = None
             if self.is_fitted:
                 try:
-                    feature_vector = np.array([[outbound_bytes, inbound_bytes, ratio_info["ratio"], duration_info["duration_seconds"], skew, duration_info["throughput_bytes_sec"]]], dtype=float)
-                    if feature_vector.shape[1] > 0:
-                        feature_vector_scaled = self.scaler.transform(feature_vector)
-                        anomaly_score = float(self.iforest.decision_function(feature_vector_scaled)[0])
-                        ml_based = anomaly_score < 0
-                        confidence = min(1.0, abs(anomaly_score) * 2)
+                    vec = np.array([[feats["outbound_bytes_abs"], feats["bytes_per_packet"], feats["throughput_bytes_sec"]]], dtype=float)
+                    scaled = self.scaler.transform(vec)
+                    score = float(self.iforest.decision_function(scaled)[0])
+                    ml_based = score < 0
                 except Exception:
                     pass
-            if rule_based or ml_based:
-                if rule_based and ml_based:
-                    final_confidence = min(1.0, confidence * 1.5 if confidence>0 else 0.85)
-                elif rule_based:
-                    final_confidence = 0.82
-                else:
-                    final_confidence = min(1.0, confidence)
-                if total_bytes > 100 * 1024 * 1024:
-                    severity = "critical"
-                elif total_bytes > 10 * 1024 * 1024:
-                    severity = "high"
-                elif total_bytes > 1 * 1024 * 1024:
-                    severity = "medium"
-                else:
-                    severity = "low"
-                return {
-                    "threat_class": "exfiltration",
-                    "severity": severity,
-                    "confidence": round(final_confidence, 4),
-                    "evidence": [
-                        Evidence(feature_name="outbound_inbound_ratio", value=round(ratio_info["ratio"],2), contribution=0.35, description=f"Outbound:inbound byte ratio: {ratio_info['ratio']:.1f}:1"),
-                        Evidence(feature_name="total_bytes_transferred", value=total_bytes, contribution=0.25, description=f"Total bytes transferred: {total_bytes // 1024}KB"),
-                        Evidence(feature_name="byte_skew", value=round(skew,3), contribution=0.2, description=f"Byte direction skew: {skew:.3f}"),
-                        Evidence(feature_name="duration_seconds", value=round(duration_info["duration_seconds"],2), contribution=0.15, description=f"Flow duration: {duration_info['duration_seconds']:.1f}s"),
-                        Evidence(feature_name="throughput_bytes_sec", value=round(duration_info["throughput_bytes_sec"],2), contribution=0.05, description=f"Throughput: {duration_info['throughput_bytes_sec']:.0f} B/s")
-                    ],
-                    "model_version": "isolation_forest_exfil_v1",
-                }
+            return self._alert(feats, rule_based, ml_based, score)
         except Exception:
-            pass
-        return None
+            return None
+
+    def detect_batch(self, flows: List[Any]) -> List[Optional[dict]]:
+        results: List[Optional[dict]] = [None] * len(flows)
+        model_indices: List[int] = []
+        model_rows: List[List[float]] = []
+        model_feats: List[dict] = []
+
+        for i, flow in enumerate(flows):
+            try:
+                feats = self._extract(flow)
+                rule_based = bool(feats["exfil_likely"])
+                if self.is_fitted:
+                    model_indices.append(i)
+                    model_rows.append([feats["outbound_bytes_abs"], feats["bytes_per_packet"], feats["throughput_bytes_sec"]])
+                    model_feats.append((feats, rule_based))
+                elif rule_based:
+                    results[i] = self._alert(feats, True, False, None)
+            except Exception:
+                continue
+
+        if model_rows:
+            scores = None
+            try:
+                X = np.array(model_rows, dtype=float)
+                scaled = self.scaler.transform(X)
+                scores = self.iforest.decision_function(scaled)
+            except Exception:
+                scores = None
+            for j, i in enumerate(model_indices):
+                feats, rule_based = model_feats[j]
+                if scores is not None:
+                    score = float(scores[j])
+                    ml_based = score < 0
+                else:
+                    score, ml_based = None, False
+                results[i] = self._alert(feats, rule_based, ml_based, score)
+        return results
