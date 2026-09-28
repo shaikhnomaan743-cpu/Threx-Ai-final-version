@@ -32,6 +32,8 @@ htmlcov/
 # ── Runtime data ──────────────────────────────────────────────
 # Alert DB is regenerated/seeded on boot — do not version it.
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 data/alerts.db
