@@ -22,8 +22,6 @@ export type DataMode = "simulation" | "backend" | "live";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-const getUrl = (path: string) => `${API_BASE.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
-
 let _dataMode: DataMode = "simulation";
 let _backendAvailable = false;
 
