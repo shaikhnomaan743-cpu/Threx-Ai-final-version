@@ -1,0 +1,127 @@
+{
+  "generated_by": "scripts/regenerate_evaluation.py",
+  "generated_at": "2026-09-18T16:12:45.849278Z",
+  "seed": 42,
+  "version": "3.0.0",
+  "detectors": {
+    "dga": {
+      "model": "LightGBM (length-ablated)",
+      "deployed_features": [
+        "domain_entropy",
+        "bigram_log_likelihood_2",
+        "bigram_log_likelihood_3",
+        "consonant_vowel_ratio",
+        "digit_ratio",
+        "tld_length",
+        "has_dictionary_word"
+      ],
+      "cv_auc": 0.9966,
+      "cv_sd": 0.0001,
+      "test_auc": 0.9966,
+      "full_model_cv_auc": 0.9966,
+      "length_only_baseline_cv_auc": 0.9384,
+      "corpus": {
+        "benign_n": 89917,
+        "dga_n": 52665,
+        "benign_sources": [
+          "dga_domains.csv (legit rows)",
+          "Tranco top-1m"
+        ],
+        "dga_source": "dga_domains.csv (DGArchive-derived)",
+        "benign_len_mean": 9.85,
+        "benign_len_median": 9,
+        "benign_len_min": 1,
+        "benign_len_max": 62,
+        "dga_len_mean": 17.73,
+        "dga_len_median": 15,
+        "dga_len_min": 12,
+        "dga_len_max": 32,
+        "length_overlap_benign_pct": 27.9,
+        "length_overlap_dga_pct": 100.0
+      },
+      "confusion": {
+        "tn": 17553,
+        "fp": 431,
+        "fn": 411,
+        "tp": 10122
+      },
+      "trained_at": "2026-09-14T02:05:30Z",
+      "tpr": 0.961,
+      "fpr": 0.024
+    },
+    "unidirectional_ablation": {
+      "measured_at": "2026-09-17T15:53:38Z",
+      "two_sided_features_removed": [
+        "syn_to_ack_ratio",
+        "amplification_ratio",
+        "byte_ratio_outbound"
+      ],
+      "one_sided_substitutes": [
+        "packet_rate_one_sided",
+        "amplifier_request_rate",
+        "outbound_bytes_abs",
+        "bytes_per_packet"
+      ],
+      "n_flows": {
+        "ddos": 20,
+        "c2_beacon": 20,
+        "dga": 30,
+        "dns_tunnel": 15,
+        "tls_malware": 15,
+        "recon": 10,
+        "exfiltration": 10,
+        "benign": 50
+      },
+      "per_class": {
+        "c2_beacon": {
+          "bidirectional_f1": 0.8889,
+          "unidirectional_f1": 0.8889,
+          "with_substitutes_f1": 0.8889
+        },
+        "ddos": {
+          "bidirectional_f1": 1.0,
+          "unidirectional_f1": 1.0,
+          "with_substitutes_f1": 1.0
+        },
+        "dga": {
+          "bidirectional_f1": 0.9474,
+          "unidirectional_f1": 0.9474,
+          "with_substitutes_f1": 0.9474
+        },
+        "dns_tunnel": {
+          "bidirectional_f1": 1.0,
+          "unidirectional_f1": 1.0,
+          "with_substitutes_f1": 1.0
+        },
+        "exfiltration": {
+          "bidirectional_f1": 1.0,
+          "unidirectional_f1": 1.0,
+          "with_substitutes_f1": 1.0
+        },
+        "recon": {
+          "bidirectional_f1": 1.0,
+          "unidirectional_f1": 1.0,
+          "with_substitutes_f1": 1.0
+        },
+        "tls_malware": {
+          "bidirectional_f1": 1.0,
+          "unidirectional_f1": 1.0,
+          "with_substitutes_f1": 1.0
+        }
+      }
+    }
+  },
+  "throughput": {
+    "measured_at": "2026-09-18T15:47:16Z",
+    "sustained_flows_per_sec": 92.5,
+    "burst_flows_per_sec": 78.4,
+    "p50_latency_ms": 2.15,
+    "p95_latency_ms": 42.06,
+    "p99_latency_ms": 56.66,
+    "n_flows_tested": 180,
+    "zero_drops": true,
+    "return_path": "NONE",
+    "note": "Throughput and latency are quoted from the SAME run. Hardware dependent \u2014 re-run scripts/measure_throughput.py on the target machine and quote what it prints."
+  },
+  "provenance": "Derived from measured artifacts only. Values are not hand-edited; edit the source artifact and re-run this script instead."
+}

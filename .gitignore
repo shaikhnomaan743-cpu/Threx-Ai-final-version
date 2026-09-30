@@ -1,0 +1,88 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build output ──────────────────────────────────────────────
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# ── Environment / secrets ─────────────────────────────────────
+# .env.example files ARE committed; real .env files are not.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Runtime data ──────────────────────────────────────────────
+# Alert DB is regenerated/seeded on boot — do not version it.
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+data/alerts.db
+backend/cybersentinel-backend/data/alerts.db
+network/logs/*
+!network/logs/.gitkeep
+
+# ── OS / editor ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# NOTE: trained model artifacts (*.joblib) ARE committed on purpose —
+# the backend auto-loads them on startup. See MODEL_DOCUMENTATION.md.
+
+# -- Datasets (download separately, see backend/data/README.md) --
+dga_domains.csv
+tranco_*.csv.zip
+backend/data/top-1m.csv
+backend/data/dga_domains.csv
+backend/data/*.zip
+
+# -- Local scratch / deck tooling, not part of the product --
+analyze_existing_ppt.py
+analyze_sih_format.py
+create_sih_presentation.py
+extract_pdf_text.py
+literature_review_extracted.txt
+*.bak
+
+# ── Large training corpora (fetch, don't commit) ──────────────────────
+# backend/data/dga_domains.csv  — DGArchive-derived + legit rows
+# backend/data/top-1m.csv       — Tranco top 1M (https://tranco-list.eu)
+# Both are required by scripts/train_dga.py. See data/DATASETS.md for sources.
+backend/data/dga_domains.csv
+backend/data/top-1m.csv
+*.csv.zip
+
+# Build / runtime artifacts
+__pycache__/
+.pytest_cache/
+.DS_Store
+data/pcaps/uploads/
+threx-AI/

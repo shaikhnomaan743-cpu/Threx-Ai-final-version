@@ -1,0 +1,8 @@
+{
+  "mean_cv_beacon": 0.07,
+  "mean_cv_benign": 0.45,
+  "mean_periodicity_beacon": 0.62,
+  "mean_periodicity_benign": 0.12,
+  "threshold_cv": 0.1,
+  "threshold_periodicity": 0.2
+}

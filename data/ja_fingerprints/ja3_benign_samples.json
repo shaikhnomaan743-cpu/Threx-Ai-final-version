@@ -1,0 +1,1102 @@
+[
+  {
+    "ja3": "04af93e491fe1982c07a353f16e8276c",
+    "ja3s": "5161d4bba94986eda9761ea1dd563db7",
+    "host": "stackoverflow.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "122a7012a986655a7e9843892512258e",
+    "ja3s": "8032e25de1b1964775c86d02c833f41d",
+    "host": "theguardian.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "11bbf4a433dc520c14df252299b377c2",
+    "ja3s": "f4bbd209ca173af28ca664c0a6402df6",
+    "host": "yahoo.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "752cde7cc1fdc957416b4e8a958ec7cb",
+    "ja3s": "7432c0f1e99f10591257a40b4d3bfa01",
+    "host": "espn.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "0ac7efd94677107335cdb05fa2a9b7d1",
+    "ja3s": "e521d1e621dc9a62d2a981846ced57fd",
+    "host": "huffpost.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "4f463d4e9e8dd511a939e47d604886be",
+    "ja3s": "d734b3674288e6f7a81dd11792c3bc1e",
+    "host": "bing.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "f5a8d33a0b8f331ddf82b864ee576f23",
+    "ja3s": "124616a87b763626519e69f5445a6095",
+    "host": "dropbox.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3c0e1762545a280af1bba448694a1b06",
+    "ja3s": "a0a2a7ed7274202fef2a63c45965f6d3",
+    "host": "zoom.us",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3184307cb795503e6d0a96a64d74edba",
+    "ja3s": "5759c295420b36410f747b5b64fcabae",
+    "host": "twitch.tv",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "6e0f65eb6ba9b782329d857f83c6919f",
+    "ja3s": "6ca27843132dbdddca38b38f176411c2",
+    "host": "bloomberg.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "4e785121bc9329651e913d57321c0534",
+    "ja3s": "91f5c401cbbb65152f72bf99f72a57f4",
+    "host": "google.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "d2eaea9a2da46f3f476fe8e9bbd7b384",
+    "ja3s": "724a95db63d4061c5290c4ad84c82de9",
+    "host": "microsoft.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "ce78fef6ec66a05a22c5832d0bf184c2",
+    "ja3s": "e7be65449a925c33d638e198b88d919a",
+    "host": "reddit.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "11c075c54da3a2813a431e799fab3096",
+    "ja3s": "1d1b774c7ac73a44f8099293500b2a21",
+    "host": "apple.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "6f9256bc5ca64b073383abf3fa8f2044",
+    "ja3s": "2425481ccb7fb9a4e6142322b692d80f",
+    "host": "facebook.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3ff792c4c9efb42c2d46d0e1bd21dd85",
+    "ja3s": "6e92ac0e7215ed1a5909f4405367f4ea",
+    "host": "slack.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "79c881544080cbcbc26b3d255fb1608c",
+    "ja3s": "a6a8eada84d5228d0511d172bba61e45",
+    "host": "booking.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "918a2888bfdc4b0d0dd57598aeb74349",
+    "ja3s": "84543a1f3af5c80303270cacf0491648",
+    "host": "airbnb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "fa0a4359c23fd23e9ebb61dde7dcb502",
+    "ja3s": "5e10fd6a082aaaecd6ba2f241d5114e1",
+    "host": "ebay.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "296bb6e387dca6e3bf51b16020240378",
+    "ja3s": "d04e386d5c55f6772aef5def76649ffd",
+    "host": "yelp.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "40075369e56ba327bfc19037e818101b",
+    "ja3s": "e9d3987063d2f289097b4956aaa3cd0e",
+    "host": "paypal.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "4b49da606b239476a57f47903d842c77",
+    "ja3s": "b39446a09f3f2a4c5ef757dc32031202",
+    "host": "facebook.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "325a1150fd2eff365aefbec901f4beb4",
+    "ja3s": "286b17c06314dbba4f403cd7f4541716",
+    "host": "linkedin.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "cdf5816226a9527f6516d70cff25b3a1",
+    "ja3s": "b5af959d11b8432245b28daa5f3f4492",
+    "host": "airbnb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "4c9857e314aac9371db06fc62b20ca76",
+    "ja3s": "33ea2fa447a857ae97d7eb2da18da3d9",
+    "host": "netflix.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3ba560cdda4cf08356bbc8139f3c0515",
+    "ja3s": "3be28e71783a59bc82f4bf8f61740a8c",
+    "host": "bbc.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "78c3a8920764703a3d3a92de53cc0027",
+    "ja3s": "9772caee0276b7f884d6d8ba60bd51ac",
+    "host": "weather.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "e843c5254ee19672aa79294a38995341",
+    "ja3s": "81dd0a57636448182763650aa39686bc",
+    "host": "yelp.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "62903a05d09c2a9737e9d8b8b9859188",
+    "ja3s": "4ddd47482f5664d81211322905962f8f",
+    "host": "slack.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "ce31663481983ceb7377097b85dbbb70",
+    "ja3s": "c8a760972b77c388dfba264444801cf6",
+    "host": "apple.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "80152552a95c1dd2447d3f29810a9b15",
+    "ja3s": "180d42d2b0f83c536dc4219961daf816",
+    "host": "adobe.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "f2964e7c93c44ccaa5736adb7ed68376",
+    "ja3s": "bd2d9d9a8bb8efa9a8ec315f12c80d68",
+    "host": "medium.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "5155fc0e340b1b57631f193618bfd19a",
+    "ja3s": "d011c25f1b228f42789f05b23f528e44",
+    "host": "youtube.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "9ab56bfd6e15a8831dca73a799ad42de",
+    "ja3s": "2e8666c1da6707c16930a0ceed9d620d",
+    "host": "zoom.us",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "daa46a2bb6f8e50330e8f9b27e06287c",
+    "ja3s": "0521c3521fc05283f6650b5c47429ae1",
+    "host": "wsj.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "1c865f30a73b80085ae090de1d9ef057",
+    "ja3s": "0f9910346d4e17f65ce92dba9e98ccd0",
+    "host": "bloomberg.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "98d6412123f1e0c6f87ef5da1e537c3b",
+    "ja3s": "b32ca5f8a2dff94e40bf436564d58375",
+    "host": "live.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "30be28d7fea42587fc3d8356a579a8b3",
+    "ja3s": "b223fc8eedeec70785f184b990b017ee",
+    "host": "espn.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "088accf0c59a7b48fa53884ad2593f96",
+    "ja3s": "121befe3581fda80ae43abebd077e7e0",
+    "host": "medium.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "f2c681b71582d23a2b210511f2d67389",
+    "ja3s": "98b484b429531144fd6a82b677bf72f0",
+    "host": "nytimes.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "87d2d2f3c873c31b03b6073fd532c547",
+    "ja3s": "a8fcb933ea4a67fcb9c2c2d4647a8aa3",
+    "host": "instagram.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "2578ab1524f9f33d8ec7aad056cbe8b7",
+    "ja3s": "f7c29b043fba0bff9e315620bd528bc0",
+    "host": "booking.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "7ce3010b43565a2d3b3c659e1cce7a93",
+    "ja3s": "9ee911d98010df36d77a83fcd6a95f62",
+    "host": "whatsapp.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "4155b08005f5bddc72257fc72b854a95",
+    "ja3s": "7596bb1b89646e8421e237ff515c615c",
+    "host": "paypal.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "c5194160a8bb01c9e1a074964088dcee",
+    "ja3s": "ef5045bf5c80fba63d3e8fe27f95ddb8",
+    "host": "cdn24522.ai",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "4e055e88adc1a346fc2d91a2245bba62",
+    "ja3s": "2c861a11b543b14d5da23020b1298855",
+    "host": "uber.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "b0e1ec5acd6f104c1642a3083a2fb982",
+    "ja3s": "1923e8cc5dd9a467ddc6e76101d2b7a1",
+    "host": "yahoo.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "5907cadd45a39d356a62a4f10a667098",
+    "ja3s": "4cd664dc5d7dac4098ca43f593e12a9c",
+    "host": "medium.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "a6cca4de807212798f4a6a34a5b50297",
+    "ja3s": "a104ad50da892f25c356c627432309bb",
+    "host": "booking.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "f4fed7fa57aa13e7b3f6f4e9a7fede6c",
+    "ja3s": "3968058dc9026df19e3a0d0544dab45a",
+    "host": "stackoverflow.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "6173d23d08dedd4508e3283d3cab01f0",
+    "ja3s": "c40378f8d202ed7af01e2d7fdf16d48b",
+    "host": "uber.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "14c94ac0029d35986657fd4a32b9a265",
+    "ja3s": "3aa069f2ac0afa3349aa0dd7eb827bce",
+    "host": "live.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "77d46bdc591387fadcdc137cbe6a58e6",
+    "ja3s": "76db5323babdfdcfa49c423305c05ec4",
+    "host": "imdb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "a357b531af83504b10f5846fb2b70c2a",
+    "ja3s": "2a379411a2982fee68b807b0e2c8fb4c",
+    "host": "wordpress.org",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "0ef415273cf963583be138018d9caa52",
+    "ja3s": "e9b9972c6678b57fa1625214535da0c0",
+    "host": "airbnb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "0bd04306be83d65ff9d0631ca4260d13",
+    "ja3s": "5c950628841bfc7914e499199cdb2eca",
+    "host": "whatsapp.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "1ee143c8587be6e92ffa48e8ce6b0886",
+    "ja3s": "a60524fda7b0856db84ace6fb45be3fc",
+    "host": "reddit.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "a3a37d7c80499d764457e7d26a3c6d9e",
+    "ja3s": "8d7a5d970eeb8d973ebff04a7c2b8b51",
+    "host": "yelp.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "efe8a613f610a435d5f07b27dc26d18b",
+    "ja3s": "dd0c3ebcd2c7ba17b25b731d37189ec7",
+    "host": "wikipedia.org",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "d9aab245e508e1b1c88070d337508fa1",
+    "ja3s": "d7e0d07ff32fe5129582e5bca1d756b1",
+    "host": "quora.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "a881ce3e5cb8444e4d3d58dcb8fb3373",
+    "ja3s": "852c2d9f7dd4bdc55154486504643d05",
+    "host": "salesforce.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "8f02fe2a6858b30ef4349821e860ec19",
+    "ja3s": "7fb1749eb1774fe6433edaa252a4d39e",
+    "host": "tiktok.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "10caedfa0d94de455fe19357e5f36fc2",
+    "ja3s": "cb95167e729da4ad55f6bfb1a7a00538",
+    "host": "whatsapp.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "86186c59df84b9e517eb2bf0541abe7b",
+    "ja3s": "2f448ef9b87b6a2aca285f50d8a2feb7",
+    "host": "reuters.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "0845c4322983aaef6364e380af98278e",
+    "ja3s": "fa358cf1c664fb0f5b506b47a226c1f6",
+    "host": "medium.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "10bddb37aea7fa2cf057bddafa3b1d95",
+    "ja3s": "864294291f89f9f2a57201989d14802c",
+    "host": "instagram.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "57244d17d216c12c98fd28a4dbf98561",
+    "ja3s": "1fdfe4ab983d61c67322b5e1b30bc1e1",
+    "host": "office.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "0ec4b1a9ebaaf85b97cebb3d714938e6",
+    "ja3s": "d235e32acf17dcd4bfe7d3e696a3e899",
+    "host": "tiktok.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "5d12d37b60378beb5d9528de5bf9ac83",
+    "ja3s": "10d14c6485c2f369e52c60b76dd10bfc",
+    "host": "github.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "b19876dec4d8d090bd8d861af945db92",
+    "ja3s": "23702196dbb777c737a28102e239ee61",
+    "host": "airbnb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "084dcc1b4080d1143245b0951f6261f5",
+    "ja3s": "2c73c636d8254aeb0f2c7ea1e7c43d2c",
+    "host": "bloomberg.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "9a734bf0592549b39a9f6b7575b75d11",
+    "ja3s": "2f6438a63b1e96685819ae6a57666cf7",
+    "host": "slack.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "6529b0f89e07507e97f29b66e734e47e",
+    "ja3s": "a59a546a90edb0f7f8e5cd55ec410d44",
+    "host": "booking.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "35745ac5474bda528efb1aa1fa476825",
+    "ja3s": "ba89f643897c484010daae755504b7fa",
+    "host": "slack.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "81a07ed77a864178e43c92d90759fc51",
+    "ja3s": "a46bb54d9c988bc7a1d9674fa402ded0",
+    "host": "youtube.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "806380fe0b438bc6f15afd8d48104bde",
+    "ja3s": "8af92f872446ef4f938f7af34ea3aa67",
+    "host": "cloudflare.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "f2ad42f2a20f88a89888f792acaf1e98",
+    "ja3s": "dcd256bcafb10934dc19a585777fbfba",
+    "host": "bbc.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "1eb88d3953c2decc84a25323f26a3475",
+    "ja3s": "4b573945cd87c780202490ddd48ae3d8",
+    "host": "tripadvisor.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "deb893151e14f56db639ea0f77a3fd6e",
+    "ja3s": "fcfd55fbcbda5c13e501780eefb2361e",
+    "host": "github.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "364e5026ae6e149becfd945e4352e476",
+    "ja3s": "66fa4924da95596238be7988638d996d",
+    "host": "reuters.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "be462aa13c96465a5ea5698724702e3a",
+    "ja3s": "d6e2b3bd89b539065260b67ee747e1b0",
+    "host": "bloomberg.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3e2622128a1ae5a158a08107042bb197",
+    "ja3s": "c6bd20cd777e9dc8b814ed9834cf56f8",
+    "host": "amazon.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "00409d922ee25edfba735ce6dc8e7837",
+    "ja3s": "63818f0fb1f0dd85fc365b1e2323ce12",
+    "host": "bbc.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3fd0007e6efae61735cad2697c8d30ae",
+    "ja3s": "931d6a9b7967dc48836f7eae00c5e724",
+    "host": "airbnb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "6fb8cd54cb49eda8fced6ed8cfc6da29",
+    "ja3s": "cfb20f766cad04ce9b9182508bb7fa66",
+    "host": "youtube.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "52e871c3ae8a4067df7003b404bd44b6",
+    "ja3s": "a06630971b2043fc9b9313042587a642",
+    "host": "twitter.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "c4f7678c88ad4bfb4552c028422ed7a7",
+    "ja3s": "c759e242d153756b507784bed92513ae",
+    "host": "imdb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "21241e7a77173bd81fd981e86c55214a",
+    "ja3s": "db8eedf15bc0a847ef08908f86514044",
+    "host": "zoom.us",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3415c99fe52f6a4cf8613f2c819dc2de",
+    "ja3s": "a84361f27429d64c19ed1870ee9b936a",
+    "host": "cnn.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "0c1f3abd969e61aedb93ea71ec39463a",
+    "ja3s": "a75e17fa9b1ad8bc8132cfc29fe4c63f",
+    "host": "bbc.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "af02b71af61ccc1326bbe0e10828a35b",
+    "ja3s": "beb512154527a9758f9028f7856dea8f",
+    "host": "adobe.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "3347a65cf721a209787eecd1fcec689f",
+    "ja3s": "8f04dab5211677d9b4bf3df4cc4a45fe",
+    "host": "twitch.tv",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "1cc8eeefca51d6d3a0aac3023c2518d3",
+    "ja3s": "7c1917f8488fb194942809e50e308101",
+    "host": "reddit.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "77905f45b81c0cac2a74ace3e9f7a1f3",
+    "ja3s": "3f5ebca7e53f6544fbf9ef609bff8a84",
+    "host": "github.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "ead04be5a5caf2992ff89b3248122bd7",
+    "ja3s": "1960e8ae94db0a16da98147cde17eb68",
+    "host": "bloomberg.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "2bef25612bef594d558315d62f117bad",
+    "ja3s": "056815fb6587e82c3ffa5be137f26ef4",
+    "host": "bloomberg.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "20a97cc4845df2119a4f0a740b6d8d1a",
+    "ja3s": "25a3756c89cbc6c61c0035f4d3246151",
+    "host": "cloudflare.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "67a23c9709197ec229ee5a22716540d8",
+    "ja3s": "68df8abef9d891f19fc5cd45078ca589",
+    "host": "live.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "889971434e28b31781799ee0df55cd4e",
+    "ja3s": "1fb56b9cf55153738935c5f9fec62a58",
+    "host": "netflix.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  },
+  {
+    "ja3": "50a1288cac4875a0ad763742041dcea9",
+    "ja3s": "22dd3fe5f408bf1af636420ed065c38e",
+    "host": "airbnb.com",
+    "ciphers": [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256"
+    ],
+    "label": "benign"
+  }
+]
