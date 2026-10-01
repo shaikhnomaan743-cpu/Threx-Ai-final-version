@@ -86,3 +86,4 @@ __pycache__/
 .DS_Store
 data/pcaps/uploads/
 threx-AI/
+scratch/

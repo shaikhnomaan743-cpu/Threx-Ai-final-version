@@ -1,6 +1,6 @@
 # Threx AI — Passive Cyber Threat Intelligence Platform
 
-AI-powered **passive** SOC dashboard (React 19 + TypeScript) + FastAPI backend with 6 ML detectors. Designed for critical-infrastructure networks where telemetry is one-way (data diode).
+AI-powered **passive** SOC dashboard (React 19 + TypeScript) + FastAPI backend with 6 detection modules (ML and statistical). Designed for critical-infrastructure networks where telemetry is one-way (data diode).
 
 > **Passive guarantee:** no packets are ever sent back, no payload decryption. See `backend/cybersentinel-backend/README.md` and `data/DATASETS.md`.
 
@@ -116,7 +116,7 @@ GET  /
 
 ## Data & Models
 
-See `data/DATASETS.md` for sources/licenses and `data/models/evaluation.json` for actual metrics. See `MODEL_DOCUMENTATION.md` for full model documentation per detector.
+See `data/DATASETS.md` for sources/licenses and `data/models/evaluation.json` for actual metrics. See `docs/MODEL_DOCUMENTATION.md` for full model documentation per detector.
 
 **Training:** deterministic seed 42, 80/20 stratified split where applicable.
 
@@ -227,11 +227,6 @@ PYTHONPATH=. python scripts/benchmark_pipeline.py --rate 120000 --seconds 60 --m
 PYTHONPATH=. python scripts/benchmark_pipeline.py --rate 120000 --seconds 60 --mix realistic
 ```
 
-| run | hardware | sustained flows/s | p50 / p95 / p99 | loss |
-|---|---|---|---|---|
-| `--mix lab` (30 % attacks) | i7-14650HX laptop | *run the command above* | | |
-| `--mix realistic` (3 % attacks) | i7-14650HX laptop | *run the command above* | | |
-
 Results are written to `data/benchmark_<mix>_<rate>.json` (with CPU model,
 worker count and config). Quote what the laptop prints — nothing here is
 typed in by hand.
@@ -249,8 +244,8 @@ feed it with `scripts/flow_exporter.py` or any IPFIX/NetFlow exporter.
 ### DGA classifier — real corpora
 `cd backend/cybersentinel-backend && PYTHONPATH=. python3 scripts/train_dga.py`
 
-Corpus: 89,917 benign (dga_domains.csv legit rows + Tranco top-1m) and 52,665
-DGA (DGArchive-derived).
+Corpus: 89,917 benign (`data/raw/dga_domains.csv` legit rows +
+`data/raw/tranco_GQNVK-1m.csv.zip`) and 52,665 DGA (DGArchive-derived).
 
 | metric | value |
 |---|---|
